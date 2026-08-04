@@ -2,11 +2,34 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 import dystopiaLogo from "./assets/dystopia-logo.png";
-import bandPhoto from "./assets/dystopia-band.jpg";
+import dystopiaNameLogo from "./assets/dystopia_logo_name.png";
+import background1 from "./assets/dystopia_background_1.jpg";
+import background2 from "./assets/dystopia_background_2.jpg";
+import background3 from "./assets/dystopia_background_3.jpg";
+
+const backgroundImages = [
+  background1,
+  background2,
+  background3,
+];
+
+const driftDirections = ["left", "right", "top", "bottom"];
+
+const getRandomDirection = (currentDirection) => {
+  const availableDirections = driftDirections.filter(
+    (direction) => direction !== currentDirection
+  );
+
+  return availableDirections[
+    Math.floor(Math.random() * availableDirections.length)
+  ];
+};
 
 function App() {
   const [phase, setPhase] = useState("intro");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [backgroundDirection, setBackgroundDirection] = useState("left");
 
   useEffect(() => {
     const fadeOutTimer = setTimeout(() => {
@@ -32,26 +55,46 @@ function App() {
   }, [menuOpen]);
 
   useEffect(() => {
-  const handleKeyDown = (event) => {
-    if (event.key === "Escape") {
-      setMenuOpen(false);
-    }
-  };
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
 
-  const handleResize = () => {
-    if (window.innerWidth > 720) {
-      setMenuOpen(false);
-    }
-  };
+    const handleResize = () => {
+      if (window.innerWidth > 720) {
+        setMenuOpen(false);
+      }
+    };
 
-  window.addEventListener("keydown", handleKeyDown);
-  window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
 
-  return () => {
-    window.removeEventListener("keydown", handleKeyDown);
-    window.removeEventListener("resize", handleResize);
-  };
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
+
+  useEffect(() => {
+    if (phase !== "main") {
+      return;
+    }
+
+    const backgroundTimer = setInterval(() => {
+      setBackgroundDirection((currentDirection) => {
+        return getRandomDirection(currentDirection);
+      });
+
+      setBackgroundIndex((currentIndex) => {
+        return (currentIndex + 1) % backgroundImages.length;
+      });
+    }, 10000);
+
+    return () => {
+      clearInterval(backgroundTimer);
+    };
+  }, [phase]);
 
   const closeMenu = () => {
     setMenuOpen(false);
@@ -81,10 +124,21 @@ function App() {
           </div>
         </section>
       ) : (
-        <section
-          className="home"
-          style={{ backgroundImage: `url(${bandPhoto})` }}
-        >
+        <section className="home">
+          <div className="background-slider" aria-hidden="true">
+            {backgroundImages.map((image, index) => (
+              <div
+                key={image}
+                className={`background-slide ${
+                  index === backgroundIndex
+                    ? "background-slide--active"
+                    : ""
+                } background-slide--${backgroundDirection}`}
+                style={{ backgroundImage: `url(${image})` }}
+              />
+            ))}
+          </div>
+
           <div className="home-overlay" />
 
           <header className="site-header">
@@ -140,7 +194,13 @@ function App() {
           <div className="hero-content" id="top">
             <p className="hero-kicker">Official website</p>
 
-            <h1>Dystopia</h1>
+            <h1 className="hero-title">
+              <img
+                className="hero-wordmark"
+                src={dystopiaNameLogo}
+                alt="Dystopia"
+                />
+            </h1>
 
             <p className="hero-description">
               Metal from Hungary
