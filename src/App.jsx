@@ -6,6 +6,7 @@ import bandPhoto from "./assets/dystopia-band.jpg";
 
 function App() {
   const [phase, setPhase] = useState("intro");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fadeOutTimer = setTimeout(() => {
@@ -21,6 +22,40 @@ function App() {
       clearTimeout(showMainPageTimer);
     };
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      setMenuOpen(false);
+    }
+  };
+
+  const handleResize = () => {
+    if (window.innerWidth > 720) {
+      setMenuOpen(false);
+    }
+  };
+
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("resize", handleResize);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+    window.removeEventListener("resize", handleResize);
+  };
+  }, []);
+
+  const closeMenu = () => {
+    setMenuOpen(false);
+  };
 
   return (
     <main className="app">
@@ -53,21 +88,60 @@ function App() {
           <div className="home-overlay" />
 
           <header className="site-header">
-            <a className="brand" href="#top" aria-label="Dystopia kezdőlap">
+            <a
+              className="brand"
+              href="#top"
+              aria-label="Dystopia kezdőlap"
+              onClick={closeMenu}
+            >
               <img src={dystopiaLogo} alt="Dystopia" />
             </a>
 
-            <nav className="main-navigation" aria-label="Fő navigáció">
-              <a href="#merch">Merch</a>
-              <a href="#music">Zene</a>
-              <a href="#bio">Bio</a>
-              <a href="#contact">Kapcsolat</a>
+            <button
+              className={`menu-toggle ${
+                menuOpen ? "menu-toggle--open" : ""
+              }`}
+              type="button"
+              aria-label={menuOpen ? "Menü bezárása" : "Menü megnyitása"}
+              aria-expanded={menuOpen}
+              aria-controls="main-navigation"
+              onClick={() => setMenuOpen((current) => !current)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+
+            <nav
+              id="main-navigation"
+              className={`main-navigation ${
+                menuOpen ? "main-navigation--open" : ""
+              }`}
+              aria-label="Fő navigáció"
+            >
+              <a href="#merch" onClick={closeMenu}>
+                Merch
+              </a>
+
+              <a href="#music" onClick={closeMenu}>
+                Zene
+              </a>
+
+              <a href="#bio" onClick={closeMenu}>
+                Bio
+              </a>
+
+              <a href="#contact" onClick={closeMenu}>
+                Kapcsolat
+              </a>
             </nav>
           </header>
 
           <div className="hero-content" id="top">
             <p className="hero-kicker">Official website</p>
+
             <h1>Dystopia</h1>
+
             <p className="hero-description">
               Metal from Hungary
             </p>
