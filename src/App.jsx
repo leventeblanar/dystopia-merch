@@ -14,6 +14,127 @@ const backgroundImages = [
   background3,
 ];
 
+const musicVideos = [
+  {
+    id: "8DCXT9bigSg",
+    title: "Dystopia - Nem látszik már",
+    meta: "Dystopia - Nem látszik már // Official klip",
+  },
+  {
+    id: "wYSw1rSn5e4",
+    title: "Dystopia - Mesterlövész",
+    meta: "Dystopia - Mesterlövész // Official klip",
+  },
+  {
+    id: "PtwgwD97YQk",
+    title: "Dystopia - Utolsó repülés",
+    meta: "Dystopia - Utolsó repülés // Official klip",
+  },
+  {
+    id: "ZsMix35YvQo",
+    title: "Dystopia - Amivel magadnak tartozol",
+    meta: "Dystopia - Amivel magadnak tartozol // Official klip",
+  },
+];
+
+const socialLinks = [
+  {
+    label: "Spotify",
+    href: "https://open.spotify.com/artist/3am22hyFJavCKrKrwL8zis",
+    icon: "spotify",
+  },
+  {
+    label: "Deezer",
+    href: "https://www.deezer.com/en/artist/12939023",
+    icon: "deezer",
+  },
+  {
+    label: "Apple Music",
+    href: "https://music.apple.com/",
+    icon: "apple",
+  },
+  {
+    label: "YouTube",
+    href: "https://www.youtube.com/@dystopiahungary",
+    icon: "youtube",
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/dystopiahungary/?locale=hu_HU",
+    icon: "facebook",
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/dystopia_hungary/",
+    icon: "instagram",
+  },
+  {
+    label: "Bandcamp",
+    href: "https://dystopiahungary.bandcamp.com/album/mesterl-v-sz",
+    icon: "bandcamp",
+  },
+];
+
+function SocialIcon({ icon }) {
+  switch (icon) {
+    case "spotify":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M7 9.2c3.6-1 6.9-.7 10 .7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+          <path d="M7.9 12.4c2.8-.7 5.3-.5 7.7.6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.55" />
+          <path d="M8.8 15.3c2-.5 3.8-.3 5.5.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" />
+        </svg>
+      );
+    case "deezer":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="13.5" width="2.2" height="5.5" fill="currentColor" />
+          <rect x="6.4" y="11" width="2.2" height="8" fill="currentColor" />
+          <rect x="9.8" y="8.5" width="2.2" height="10.5" fill="currentColor" />
+          <rect x="13.2" y="6" width="2.2" height="13" fill="currentColor" />
+          <rect x="16.6" y="9.5" width="2.2" height="9.5" fill="currentColor" />
+        </svg>
+      );
+    case "apple":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M15.7 3.2c-.8.1-1.7.7-2.2 1.4-.5.6-.8 1.5-.7 2.3.9.1 1.8-.4 2.4-1.1.5-.7.8-1.5.5-2.6Z" fill="currentColor" />
+          <path d="M17.8 12.8c0-2.1 1.7-3.1 1.8-3.2-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.4.7-3 .7-.6 0-1.5-.7-2.6-.7-1.3 0-2.6.8-3.3 2-1.4 2.5-.4 6.2 1 8.1.7 1 1.5 2.1 2.6 2 .9 0 1.3-.6 2.5-.6s1.5.6 2.5.6c1 0 1.7-1 2.4-2 .7-1.1 1-2.1 1-2.2-.1 0-1.9-.8-1.9-3.1Z" fill="currentColor" />
+        </svg>
+      );
+    case "youtube":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.2" y="6.8" width="17.6" height="10.4" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <path d="m10 9.2 5 2.8-5 2.8Z" fill="currentColor" />
+        </svg>
+      );
+    case "facebook":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M13.4 20.5v-6.8h2.3l.4-2.8h-2.7V9.2c0-.8.2-1.4 1.4-1.4h1.4V5.4c-.2 0-1.1-.1-2.1-.1-2.1 0-3.5 1.3-3.5 3.8v1.8H8.4v2.8h2.2v6.8Z" fill="currentColor" />
+        </svg>
+      );
+    case "instagram":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <circle cx="17.1" cy="6.9" r="1.1" fill="currentColor" />
+        </svg>
+      );
+    case "bandcamp":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 17.5 12.3 6.5H19l-7.2 11Z" fill="currentColor" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 const driftDirections = ["left", "right", "top", "bottom"];
 
 const getRandomDirection = (currentDirection) => {
@@ -32,6 +153,7 @@ function App() {
   const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [backgroundDirection, setBackgroundDirection] = useState("left");
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [activeVideoId, setActiveVideoId] = useState(musicVideos[0].id);
 
   useEffect(() => {
     const fadeOutTimer = setTimeout(() => {
@@ -157,6 +279,10 @@ function App() {
     setMenuOpen(false);
   };
 
+  const activeVideo = musicVideos.find((video) => {
+    return video.id === activeVideoId;
+  }) || musicVideos[0];
+
   return (
     <main className="app">
       {phase !== "main" ? (
@@ -281,6 +407,75 @@ function App() {
           </div>
         </section>
 
+        <section id="music" className="music-section">
+          <div className="music-container">
+            <div className="music-player-panel">
+              <p className="section-label">Zene</p>
+              <h2>Zene</h2>
+              <span className="music-line" />
+              <p className="music-intro">
+                Ide felőlem listázhatunk több videót is, akár egész albumot vagy valamit. Mit tudom én...
+              </p>
+
+              <div className="music-player-shell">
+                <div className="music-player-frame">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${activeVideo.id}?rel=0`}
+                    title={activeVideo.title}
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+
+                <div className="music-player-meta">
+                  <p className="music-player-kicker">Most kiválasztva</p>
+                  <h3>{activeVideo.title}</h3>
+                  <p>{activeVideo.meta}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="music-list-panel">
+              <div className="music-list-header">
+                <p className="music-list-label">Videók</p>
+                <p className="music-list-caption">Válassz egy klipet</p>
+              </div>
+
+              <div className="music-list" role="list">
+                {musicVideos.map((video) => {
+                  const isActive = video.id === activeVideo.id;
+
+                  return (
+                    <button
+                      key={video.id}
+                      type="button"
+                      className={`music-item ${
+                        isActive ? "music-item--active" : ""
+                      }`}
+                      onClick={() => setActiveVideoId(video.id)}
+                    >
+                      <span className="music-item-thumb" aria-hidden="true">
+                        <img
+                          src={`https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`}
+                          alt=""
+                          loading="lazy"
+                        />
+                      </span>
+
+                      <span className="music-item-copy">
+                        <span className="music-item-title">{video.title}</span>
+                        <span className="music-item-meta">{video.meta}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="bio" className="bio-section">
           <div className="bio-container">
             <div className="bio-heading">
@@ -331,10 +526,28 @@ function App() {
               <h2>Kapcsolat</h2>
               <span className="contact-line" />
               <p className="contact-intro">
-                Ha booking, kollab, interjú vagy bármi más miatt keresnél,
-                innen indulj. A mostani adatok helykitöltők, cseréld ki őket a
-                végleges elérhetőségekre.
+                Ide kéne valami kapcsolat sztori, ami leírja miért kereshetnek minket vagy valami.
               </p>
+
+              <div className="contact-social-block">
+                <p className="contact-social-heading">Megtalálsz minket itt is:</p>
+
+              <div className="contact-socials" aria-label="Közösségi linkek">
+                {socialLinks.map((link) => (
+                  <a
+                    key={link.label}
+                    className={`contact-social-link contact-social-link--${link.icon}`}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={link.label}
+                    title={link.label}
+                  >
+                    <SocialIcon icon={link.icon} />
+                  </a>
+                ))}
+              </div>
+              </div>
             </div>
 
             <div className="contact-grid">
@@ -349,8 +562,7 @@ function App() {
                 <p className="contact-card-label">Info</p>
                 <h3>Rövid üzenet</h3>
                 <p>
-                  Ide jöhet majd egy 1-2 soros szöveg arról, milyen ügyekben
-                  és milyen válaszidővel érdemes keresni a zenekart.
+                  Másik rövid leírós cucc...
                 </p>
               </article>
             </div>
