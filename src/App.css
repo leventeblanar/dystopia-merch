@@ -465,7 +465,7 @@
   position: relative;
 
   padding:
-    clamp(96px, 11vw, 155px)
+    clamp(34px, 5vw, 72px)
     8vw
     clamp(110px, 12vw, 170px);
 
@@ -1274,7 +1274,7 @@
     scroll-margin-top: 88px;
 
     padding:
-      88px
+      42px
       18px
       84px;
   }

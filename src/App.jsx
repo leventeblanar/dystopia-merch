@@ -351,12 +351,12 @@ function App() {
                 Merch
               </a>
 
-              <a href="#music" onClick={closeMenu}>
-                Zene
-              </a>
-
               <a href="#bio" onClick={closeMenu}>
                 Bio
+              </a>
+
+              <a href="#music" onClick={closeMenu}>
+                Zene
               </a>
 
               <a href="#contact" onClick={closeMenu}>
@@ -404,6 +404,49 @@ function App() {
 
           <div className="scroll-indicator" aria-hidden="true">
             <span />
+          </div>
+        </section>
+
+        <section id="bio" className="bio-section">
+          <div className="bio-container">
+            <div className="bio-heading">
+              <p className="section-label">A zenekarról</p>
+              <h2>Bio</h2>
+              <span className="bio-line" />
+              <figure
+                className="bio-photo"
+                style={{ "--bio-photo-image": `url(${groupPhoto})` }}
+              >
+              <img
+                src={groupPhoto}
+                alt="A Dystopia zenekar tagjai"
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
+            </div>
+
+            <div className="bio-content">
+              <p className="bio-lead">
+                A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
+              </p>
+
+              <p>
+                A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
+
+                Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.
+
+                Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk.
+
+                2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatóján. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
+
+                A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
+              </p>
+
+              <p>
+                Ide még jöhetne akár egy tag bemutatás vagy valami hasonló
+              </p>
+            </div>
           </div>
         </section>
 
@@ -472,49 +515,6 @@ function App() {
                   );
                 })}
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="bio" className="bio-section">
-          <div className="bio-container">
-            <div className="bio-heading">
-              <p className="section-label">A zenekarról</p>
-              <h2>Bio</h2>
-              <span className="bio-line" />
-              <figure
-                className="bio-photo"
-                style={{ "--bio-photo-image": `url(${groupPhoto})` }}
-              >
-              <img
-                src={groupPhoto}
-                alt="A Dystopia zenekar tagjai"
-                loading="lazy"
-                decoding="async"
-              />
-            </figure>
-            </div>
-
-            <div className="bio-content">
-              <p className="bio-lead">
-                A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
-              </p>
-
-              <p>
-                A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
-
-                Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.
-
-                Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk.
-
-                2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatóján. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
-
-                A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
-              </p>
-
-              <p>
-                Ide még jöhetne akár egy tag bemutatás vagy valami hasonló
-              </p>
             </div>
           </div>
         </section>
