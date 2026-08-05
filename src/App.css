@@ -14,6 +14,11 @@
   color: #f5f5f5;
 }
 
+.top-anchor {
+  position: absolute;
+  top: 0;
+}
+
 .menu-toggle {
   display: none;
 }
@@ -237,8 +242,10 @@
 /* -------------------- */
 
 .site-header {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
 
   display: flex;
   align-items: center;
@@ -247,6 +254,29 @@
   width: 100%;
 
   padding: 28px 5vw;
+
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.82) 0%,
+    rgba(0, 0, 0, 0.42) 68%,
+    rgba(0, 0, 0, 0) 100%
+  );
+
+  transition:
+    transform 260ms ease,
+    opacity 260ms ease;
+}
+
+.site-header--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.site-header--hidden {
+  opacity: 0;
+  transform: translateY(-110%);
+  pointer-events: none;
 }
 
 .brand {
@@ -345,7 +375,7 @@
   width: min(720px, 90%);
 
   margin: auto 0 auto 8vw;
-  padding: 80px 0 120px;
+  padding: 148px 0 120px;
 
   animation: heroReveal 1.3s ease 200ms both;
 }
@@ -425,6 +455,471 @@
   background: #a41414;
 
   transform: translateY(-3px);
+}
+
+/* -------------------- */
+/* BIO SECTION          */
+/* -------------------- */
+
+.bio-section {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  min-height: 100vh;
+
+  padding:
+    clamp(90px, 12vw, 160px)
+    8vw;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 15% 35%,
+      rgba(130, 0, 0, 0.12),
+      transparent 35%
+    ),
+    linear-gradient(
+      180deg,
+      #050505 0%,
+      #0a0a0a 50%,
+      #050505 100%
+    );
+
+  scroll-margin-top: 0;
+}
+
+.bio-container {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+  grid-template-columns: minmax(420px, 1fr) minmax(420px, 1.1fr);
+  gap: clamp(60px, 6vw, 110px);
+
+  width: 100%;
+  max-width: 1450px;
+
+  margin: 0 auto;
+}
+
+.bio-heading {
+  align-self: start;
+}
+
+.section-label {
+  margin: 0 0 18px;
+
+  color: #b01818;
+
+  text-transform: uppercase;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+}
+
+.bio-heading h2 {
+  margin: 0;
+
+  color: #fff;
+
+  text-transform: uppercase;
+
+  font-size: clamp(4rem, 8vw, 7rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: 0.08em;
+}
+
+.bio-line {
+  display: block;
+
+  width: 70px;
+  height: 1px;
+
+  margin-top: 32px;
+
+  background: #b01818;
+}
+
+.bio-photo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  width: 100%;
+  max-width: 680px;
+  margin: 52px 0 0;
+
+  aspect-ratio: 3 / 2;
+
+  background: transparent;
+}
+
+/* Ugyanaz a kép elmosva, a fő kép mögött */
+
+.bio-photo::before {
+  content: "";
+
+  position: absolute;
+  inset: -22px;
+  z-index: 0;
+
+  background-image: var(--bio-photo-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  filter:
+    blur(24px)
+    brightness(0.52);
+
+  opacity: 0.75;
+
+  transform: scale(1.04);
+
+  pointer-events: none;
+}
+
+/* Sötét átmenet, ami beleolvasztja a Bio hátterébe */
+
+.bio-photo::after {
+  content: "";
+
+  position: absolute;
+  inset: -2px;
+  z-index: 2;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to right,
+      rgba(5, 5, 5, 0.92) 0%,
+      transparent 14%,
+      transparent 86%,
+      rgba(5, 5, 5, 0.92) 100%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(5, 5, 5, 0.9) 0%,
+      transparent 15%,
+      transparent 85%,
+      rgba(5, 5, 5, 0.9) 100%
+    );
+}
+
+.bio-photo img {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  filter:
+    grayscale(15%)
+    contrast(1.08)
+    brightness(0.82);
+
+  -webkit-mask-image:
+    radial-gradient(
+      ellipse 92% 88% at center,
+      #000 52%,
+      rgba(0, 0, 0, 0.9) 70%,
+      transparent 100%
+    );
+
+  mask-image:
+    radial-gradient(
+      ellipse 92% 88% at center,
+      #000 52%,
+      rgba(0, 0, 0, 0.9) 70%,
+      transparent 100%
+    );
+
+  transition:
+    filter 500ms ease,
+    transform 700ms ease;
+}
+
+.bio-photo:hover img {
+  filter:
+    grayscale(0%)
+    contrast(1.05)
+    brightness(0.92);
+
+  transform: scale(1.025);
+}
+
+.bio-content {
+  max-width: 700px;
+
+  color: rgba(255, 255, 255, 0.64);
+
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.bio-content p {
+  margin: 0 0 24px;
+}
+
+.bio-content p:last-child {
+  margin-bottom: 0;
+}
+
+.bio-content .bio-lead {
+  color: rgba(255, 255, 255, 0.9);
+
+  font-size: clamp(1.2rem, 2vw, 1.55rem);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+/* -------------------- */
+/* CONTACT SECTION      */
+/* -------------------- */
+
+.contact-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  min-height: 100vh;
+
+  padding:
+    clamp(95px, 12vw, 170px)
+    8vw
+    clamp(110px, 12vw, 180px);
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 82% 18%,
+      rgba(164, 164, 164, 0.08),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 18% 78%,
+      rgba(176, 24, 24, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      #030303 0%,
+      #0e1116 46%,
+      #050505 100%
+    );
+
+  scroll-margin-top: 0;
+}
+
+.contact-container {
+  position: relative;
+  z-index: 1;
+
+  display: grid;
+  grid-template-columns: minmax(300px, 0.82fr) minmax(320px, 0.95fr);
+  gap: clamp(50px, 7vw, 120px);
+
+  width: 100%;
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+.contact-heading {
+  align-self: start;
+  max-width: 420px;
+}
+
+.contact-heading h2 {
+  margin: 0;
+
+  color: #fff;
+
+  text-transform: uppercase;
+
+  font-size: clamp(3.4rem, 6.5vw, 5.8rem);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: 0.08em;
+}
+
+.contact-line {
+  display: block;
+
+  width: 70px;
+  height: 1px;
+
+  margin-top: 32px;
+
+  background: linear-gradient(90deg, #b01818, rgba(176, 24, 24, 0.15));
+}
+
+.contact-intro {
+  max-width: 420px;
+  margin: 28px 0 0;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr);
+  gap: 24px;
+}
+
+.contact-card {
+  position: relative;
+
+  min-height: 210px;
+  padding: 30px 28px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035) 0%,
+      rgba(255, 255, 255, 0.015) 100%
+    ),
+    rgba(6, 8, 11, 0.82);
+
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.contact-card::after {
+  content: "";
+
+  position: absolute;
+  left: 28px;
+  top: 0;
+
+  width: 58px;
+  height: 1px;
+
+  background: #b01818;
+}
+
+.contact-card h3 {
+  margin: 0 0 18px;
+
+  color: #fff;
+
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.contact-card p {
+  margin: 0 0 10px;
+
+  color: rgba(255, 255, 255, 0.68);
+
+  line-height: 1.75;
+}
+
+.contact-card p:last-child {
+  margin-bottom: 0;
+}
+
+.contact-card-label {
+  margin-bottom: 18px;
+
+  color: #b01818;
+
+  text-transform: uppercase;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+}
+
+.contact-card--wide {
+  grid-column: auto;
+  min-height: 180px;
+}
+
+@media (max-width: 720px) {
+  .bio-section {
+    min-height: auto;
+    scroll-margin-top: 88px;
+
+    padding:
+      90px
+      22px
+      100px;
+  }
+
+  .bio-container {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+
+  .bio-heading h2 {
+    font-size: clamp(3.5rem, 18vw, 5rem);
+  }
+
+  .bio-content {
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .contact-section {
+    min-height: auto;
+    scroll-margin-top: 88px;
+
+    padding:
+      90px
+      22px
+      100px;
+  }
+
+  .contact-container {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .contact-heading h2 {
+    font-size: clamp(3.5rem, 18vw, 5rem);
+  }
+
+  .contact-intro {
+    max-width: none;
+
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-card {
+    min-height: auto;
+    padding: 28px 24px;
+  }
+
+  .contact-card--wide {
+    grid-column: auto;
+  }
 }
 
 /* -------------------- */
@@ -654,18 +1149,31 @@
       );
   }
 
+  .bio-photo {
+    margin-top: 40px;
+    aspect-ratio: 3 / 2;
+  }
+
+  .bio-photo:hover img {
+    transform: scale(1.01);
+  }
+
   /* HEADER */
 
   .site-header {
-    position: relative;
-    z-index: 20;
-
     align-items: center;
 
     padding-top: calc(20px + env(safe-area-inset-top));
     padding-right: calc(22px + env(safe-area-inset-right));
     padding-bottom: 20px;
     padding-left: calc(22px + env(safe-area-inset-left));
+
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.62) 68%,
+      rgba(0, 0, 0, 0) 100%
+    );
   }
 
   .brand {
@@ -794,7 +1302,7 @@
 
     margin: auto 22px 0;
 
-    padding-top: 150px;
+    padding-top: calc(140px + env(safe-area-inset-top));
     padding-bottom: calc(78px + env(safe-area-inset-bottom));
 
     animation-delay: 100ms;
@@ -845,6 +1353,7 @@
     margin-right: 18px;
     margin-left: 18px;
 
+    padding-top: calc(132px + env(safe-area-inset-top));
     padding-bottom: calc(55px + env(safe-area-inset-bottom));
   }
 
