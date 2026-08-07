@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" https://dystopia-merch.blanar-levente.workers.dev/api/health)",
+      "Bash(curl -s -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\" https://dystopia-merch.blanar-levente.workers.dev/api/products)",
+      "Bash(npx wrangler *)",
+      "Bash(curl -s -o /dev/null -w \"front.png: %{http_code}\\\\n\" https://dystopia-merch.blanar-levente.workers.dev/api/images/products/1/front.png)",
+      "Bash(curl -s -o /dev/null -w \"Dyst+1.png: %{http_code}\\\\n\" \"https://dystopia-merch.blanar-levente.workers.dev/api/images/products/2/Dyst+1.png\")",
+      "Bash(curl -s -o /dev/null -w \"back.png: %{http_code}\\\\n\" https://dystopia-merch.blanar-levente.workers.dev/api/images/products/1/back.png)",
+      "Bash(curl -s -o /dev/null -w \"metalia_shirt.png: %{http_code}\\\\n\" https://dystopia-merch.blanar-levente.workers.dev/api/images/products/3/metalia_shirt.png)"
+    ]
+  }
+}
