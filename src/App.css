@@ -374,8 +374,13 @@
 
   width: min(720px, 90%);
 
-  margin: auto 0 auto 8vw;
-  padding: 148px 0 120px;
+  margin: 
+  auto 
+  0
+  clamp(70px, 9vh, 120px)
+  8vw;
+
+  padding: 0;
 
   animation: heroReveal 1.3s ease 200ms both;
 }
@@ -1264,11 +1269,6 @@
   letter-spacing: 0.32em;
 }
 
-.contact-card--wide {
-  grid-column: auto;
-  min-height: 180px;
-}
-
 @media (max-width: 720px) {
   .music-section {
     scroll-margin-top: 88px;
@@ -1452,10 +1452,6 @@
   .contact-card::after {
     left: 18px;
     width: 48px;
-  }
-
-  .contact-card--wide {
-    grid-column: auto;
   }
 
   .contact-card-label {

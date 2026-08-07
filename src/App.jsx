@@ -553,17 +553,10 @@ function App() {
             <div className="contact-grid">
               <article className="contact-card">
                 <p className="contact-card-label">Booking</p>
+                
                 <h3>Koncertszervezés</h3>
                 <p>booking@dystopia.hu</p>
                 <p>+36 30 123 4567</p>
-              </article>
-
-              <article className="contact-card contact-card--wide">
-                <p className="contact-card-label">Info</p>
-                <h3>Rövid üzenet</h3>
-                <p>
-                  Másik rövid leírós cucc...
-                </p>
               </article>
             </div>
           </div>
