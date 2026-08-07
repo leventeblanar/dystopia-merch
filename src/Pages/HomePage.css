@@ -1754,6 +1754,21 @@
     width: 95px;
   }
 
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+
+    display: block;
+
+    border: 0;
+    padding: 0;
+    margin: 0;
+
+    background: transparent;
+    cursor: default;
+  }
+
   /* HAMBURGER BUTTON */
 
   .menu-toggle {
@@ -1902,6 +1917,12 @@
   }
 
   .scroll-indicator {
+    display: none;
+  }
+}
+
+@media (min-width: 721px) {
+  .menu-backdrop {
     display: none;
   }
 }

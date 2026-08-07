@@ -1,0 +1,27 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "dystopia-merch",
+    "main": "./worker/index.ts",
+	"compatibility_date": "2026-08-07",
+    "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+        "/api/*"
+    ]
+    },
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "dystopia-merch-db",
+			"database_id": "aa4d699b-6bc3-4639-8dde-97b241b7477f"
+		}
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "dystopia-merch-images",
+			"binding": "dystopia_merch_images"
+		}
+	]
+}
