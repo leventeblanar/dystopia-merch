@@ -285,6 +285,28 @@
   width: 135px;
 
   text-decoration: none;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transform: translateY(-8px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 900ms ease,
+    transform 900ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 900ms ease;
+}
+
+
+.brand--visible {
+  opacity: 1;
+  visibility: visible;
+
+  transform: translateY(0);
+
+  pointer-events: auto;
 }
 
 .brand img {
@@ -463,6 +485,246 @@
 }
 
 /* -------------------- */
+/* MERCH SHOWCASE       */
+/* -------------------- */
+
+.merch-showcase {
+  position: absolute;
+  top: 42%;
+  right: 9vw;
+  z-index: 5;
+
+  width: min(260px, 20vw);
+
+  transform: translateY(-50%);
+
+  animation: heroReveal 1.3s ease 380ms both;
+}
+
+.merch-showcase-close {
+  display: none;
+}
+
+.merch-showcase-card {
+  display: block;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+.merch-showcase-frame {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+
+  aspect-ratio: 3 / 4;
+
+  background: transparent;
+
+  box-shadow:
+    0 24px 55px rgba(0, 0, 0, 0.4);
+}
+
+.merch-showcase-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  opacity: 0;
+
+  transform: scale(1.04);
+
+  -webkit-mask-image: radial-gradient(
+    ellipse 88% 92% at center,
+    #000 0%,
+    #000 52%,
+    rgba(0, 0, 0, 0.9) 64%,
+    rgba(0, 0, 0, 0.55) 76%,
+    rgba(0, 0, 0, 0.2) 88%,
+    transparent 100%
+  );
+
+  mask-image: radial-gradient(
+    ellipse 88% 92% at center,
+    #000 0%,
+    #000 52%,
+    rgba(0, 0, 0, 0.9) 64%,
+    rgba(0, 0, 0, 0.55) 76%,
+    rgba(0, 0, 0, 0.2) 88%,
+    transparent 100%
+  );
+
+  transition:
+    opacity 900ms ease,
+    transform 6s ease;
+}
+
+.merch-showcase-slide--active {
+  opacity: 1;
+
+  transform: scale(1);
+}
+
+.merch-showcase-card:hover .merch-showcase-slide--active {
+  transform: scale(1.02);
+}
+
+.merch-showcase-edge-blur {
+  position: absolute;
+  inset: -10px;
+  z-index: 1;
+
+  pointer-events: none;
+
+  backdrop-filter: blur(22px) brightness(0.62);
+  -webkit-backdrop-filter: blur(22px) brightness(0.62);
+
+  -webkit-mask-image: radial-gradient(
+    ellipse 78% 78% at center,
+    transparent 34%,
+    rgba(0, 0, 0, 0.18) 48%,
+    rgba(0, 0, 0, 0.5) 66%,
+    rgba(0, 0, 0, 0.82) 84%,
+    #000 100%
+  );
+
+  mask-image: radial-gradient(
+    ellipse 78% 78% at center,
+    transparent 34%,
+    rgba(0, 0, 0, 0.18) 48%,
+    rgba(0, 0, 0, 0.5) 66%,
+    rgba(0, 0, 0, 0.82) 84%,
+    #000 100%
+  );
+
+  transition:
+    backdrop-filter 300ms ease,
+    -webkit-backdrop-filter 300ms ease,
+    opacity 300ms ease;
+
+  opacity: 1;
+}
+
+.merch-showcase-card:hover .merch-showcase-edge-blur {
+  backdrop-filter: blur(16px) brightness(0.72);
+  -webkit-backdrop-filter: blur(16px) brightness(0.72);
+}
+
+.merch-showcase-title {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+
+  padding: 18px 14px 14px;
+
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.88) 100%);
+
+  text-align: center;
+}
+
+.merch-showcase-title span {
+  color: #fff;
+
+  text-transform: uppercase;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+}
+
+.merch-showcase-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+
+  margin-top: 14px;
+}
+
+.merch-showcase-dots span {
+  width: 5px;
+  height: 5px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.28);
+
+  transition:
+    background 250ms ease,
+    transform 250ms ease;
+}
+
+.merch-showcase-dots span.merch-showcase-dot--active {
+  background: #b01818;
+
+  transform: scale(1.3);
+}
+
+@media (max-width: 720px) {
+  .merch-showcase {
+    position: fixed;
+    top: 50%;
+    right: auto;
+    left: 50%;
+    z-index: 40;
+
+    width: min(78vw, 320px);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transform: translate(-50%, -50%) scale(0.92);
+
+    animation: none;
+
+    transition:
+      opacity 500ms ease,
+      transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 500ms ease;
+  }
+
+  .merch-showcase--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .merch-showcase-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 32px;
+    height: 32px;
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 999px;
+
+    background: rgba(0, 0, 0, 0.88);
+    color: #fff;
+
+    font-size: 1.1rem;
+    line-height: 1;
+
+    cursor: pointer;
+  }
+}
+
+/* -------------------- */
 /* MUSIC SECTION        */
 /* -------------------- */
 
@@ -478,7 +740,7 @@
 
   background:
     radial-gradient(
-      circle at 78% 20%,
+      circle at var(--spot-x, 78%) var(--spot-y, 20%),
       rgba(176, 24, 24, 0.14),
       transparent 26%
     ),
@@ -494,7 +756,11 @@
 
 .music-container {
   display: grid;
+  align-items: start;
   grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.72fr);
+  grid-template-areas:
+    "header header"
+    "player list";
   gap: clamp(30px, 4vw, 56px);
 
   width: 100%;
@@ -502,12 +768,24 @@
   margin: 0 auto;
 }
 
+.music-header {
+  grid-area: header;
+}
+
 .music-player-panel,
 .music-list-panel {
   min-width: 0;
 }
 
-.music-player-panel h2 {
+.music-player-panel {
+  grid-area: player;
+}
+
+.music-list-panel {
+  grid-area: list;
+}
+
+.music-header h2 {
   margin: 0;
 
   color: #fff;
@@ -542,8 +820,6 @@
 }
 
 .music-player-shell {
-  margin-top: 38px;
-
   border: 1px solid rgba(255, 255, 255, 0.1);
 
   background:
@@ -610,7 +886,9 @@
 }
 
 .music-list-panel {
-  align-self: end;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   padding: 26px 22px 22px;
 
@@ -631,6 +909,7 @@
 
 .music-list-header {
   display: flex;
+  flex-shrink: 0;
   align-items: end;
   justify-content: space-between;
   gap: 16px;
@@ -662,13 +941,20 @@
 
 .music-list {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   gap: 12px;
 
-  max-height: 560px;
   overflow-y: auto;
 
   padding-right: 4px;
+}
+
+@media (min-width: 721px) {
+  .music-list-panel {
+    max-height: var(--music-player-height, none);
+  }
 }
 
 .music-item {
@@ -805,7 +1091,7 @@
 
   background:
     radial-gradient(
-      circle at 15% 35%,
+      circle at var(--spot-x, 15%) var(--spot-y, 35%),
       rgba(130, 0, 0, 0.12),
       transparent 35%
     ),
@@ -1042,7 +1328,7 @@
       transparent 28%
     ),
     radial-gradient(
-      circle at 18% 78%,
+      circle at var(--spot-x, 18%) var(--spot-y, 78%),
       rgba(176, 24, 24, 0.12),
       transparent 34%
     ),
@@ -1097,16 +1383,6 @@
   margin-top: 32px;
 
   background: linear-gradient(90deg, #b01818, rgba(176, 24, 24, 0.15));
-}
-
-.contact-intro {
-  max-width: 420px;
-  margin: 28px 0 0;
-
-  color: rgba(255, 255, 255, 0.72);
-
-  font-size: 1rem;
-  line-height: 1.85;
 }
 
 .contact-social-block {
@@ -1305,10 +1581,14 @@
 
   .music-container {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "player"
+      "list";
     gap: 24px;
   }
 
-  .music-player-panel h2 {
+  .music-header h2 {
     font-size: clamp(3rem, 16vw, 4.2rem);
   }
 
@@ -1322,10 +1602,6 @@
 
     font-size: 0.92rem;
     line-height: 1.75;
-  }
-
-  .music-player-shell {
-    margin-top: 28px;
   }
 
   .music-player-meta {
@@ -1420,14 +1696,6 @@
   .contact-heading h2 {
     font-size: clamp(2.7rem, 12vw, 4rem);
     line-height: 0.95;
-  }
-
-  .contact-intro {
-    max-width: none;
-    margin-top: 22px;
-
-    font-size: 0.92rem;
-    line-height: 1.75;
   }
 
   .contact-social-block {

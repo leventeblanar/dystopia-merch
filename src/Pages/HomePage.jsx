@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
@@ -35,6 +35,11 @@ const musicVideos = [
     id: "ZsMix35YvQo",
     title: "Dystopia - Amivel magadnak tartozol",
     meta: "Dystopia - Amivel magadnak tartozol // Official klip",
+  },
+  {
+    id: "dTfhikcYPCw",
+    title: "Dystopia - Purge Yourself",
+    meta: "Official Music Video",
   },
 ];
 
@@ -165,10 +170,21 @@ function HomePage() {
   const [backgroundDirection, setBackgroundDirection] = useState("left");
   const [headerVisible, setHeaderVisible] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState(musicVideos[0].id);
+  const [musicPlayerHeight, setMusicPlayerHeight] = useState(null);
+  const [brandVisible, setBrandVisible] = useState(false);
 
   const [leavingForMerch, setLeavingForMerch] = useState(false);
 
+  const [merchSlides, setMerchSlides] = useState([]);
+  const [merchSlideIndex, setMerchSlideIndex] = useState(0);
+  const [merchWidgetVisible, setMerchWidgetVisible] = useState(false);
+  const [merchDismissed, setMerchDismissed] = useState(false);
+
   const navigate = useNavigate();
+  const musicPlayerPanelRef = useRef(null);
+  const bioSectionRef = useRef(null);
+  const musicSectionRef = useRef(null);
+  const contactSectionRef = useRef(null);
 
   useEffect(() => {
     if (phase !== "intro") {
@@ -219,6 +235,101 @@ function HomePage() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (phase !== "main") {
+      return;
+    }
+
+    const updateBrandVisibility = () => {
+      const bioSection = document.getElementById("bio");
+
+      if (!bioSection) {
+        return;
+      }
+
+      const bioTop = bioSection.getBoundingClientRect().top;
+
+      setBrandVisible(bioTop <= 120);
+    };
+
+    updateBrandVisibility();
+
+    window.addEventListener("scroll", updateBrandVisibility, {
+      passive: true,
+    });
+
+    window.addEventListener("resize", updateBrandVisibility);
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        updateBrandVisibility,
+      );
+
+      window.removeEventListener(
+        "resize",
+        updateBrandVisibility,
+      );
+    };
+  }, [phase]);
+
+  useEffect(() => {
+    const loadMerchSlides = async () => {
+      try {
+        const response = await fetch("/api/products");
+        const contentType = response.headers.get("content-type") ?? "";
+
+        if (!response.ok || !contentType.includes("application/json")) {
+          return;
+        }
+
+        const data = await response.json();
+
+        const slides = data
+          .map((product) => ({
+            id: product.id,
+            name: product.name,
+            image: product.images?.[0]?.url,
+          }))
+          .filter((slide) => slide.image);
+
+        setMerchSlides(slides);
+      } catch {
+        // Nem kritikus a főoldalon, csendben elhagyjuk hiba esetén.
+      }
+    };
+
+    loadMerchSlides();
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "main" || merchSlides.length <= 1) {
+      return;
+    }
+
+    const merchSlideTimer = setInterval(() => {
+      setMerchSlideIndex((currentIndex) => (currentIndex + 1) % merchSlides.length);
+    }, 5000);
+
+    return () => {
+      clearInterval(merchSlideTimer);
+    };
+  }, [phase, merchSlides.length]);
+
+  useEffect(() => {
+    if (phase !== "main") {
+      return;
+    }
+
+    const merchVisibilityTimer = setTimeout(() => {
+      setMerchWidgetVisible(true);
+    }, 3000);
+
+    return () => {
+      clearTimeout(merchVisibilityTimer);
+    };
+  }, [phase]);
 
   useEffect(() => {
     if (phase !== "main") {
@@ -295,6 +406,86 @@ function HomePage() {
     };
   }, [phase]);
 
+  useEffect(() => {
+    if (phase !== "main") {
+      return;
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    const sectionRefs = [bioSectionRef, musicSectionRef, contactSectionRef];
+    const spots = sectionRefs.map(() => ({ x: 50, y: 50 }));
+
+    const pointer = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    };
+
+    const handleMouseMove = (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+
+    let frameId;
+
+    const animateSpots = () => {
+      sectionRefs.forEach((sectionRef, index) => {
+        const element = sectionRef.current;
+
+        if (!element) {
+          return;
+        }
+
+        const rect = element.getBoundingClientRect();
+        const spot = spots[index];
+
+        const targetX = ((pointer.x - rect.left) / rect.width) * 100;
+        const targetY = ((pointer.y - rect.top) / rect.height) * 100;
+
+        spot.x += (targetX - spot.x) * 0.045;
+        spot.y += (targetY - spot.y) * 0.045;
+
+        element.style.setProperty("--spot-x", `${spot.x}%`);
+        element.style.setProperty("--spot-y", `${spot.y}%`);
+      });
+
+      frameId = requestAnimationFrame(animateSpots);
+    };
+
+    frameId = requestAnimationFrame(animateSpots);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(frameId);
+    };
+  }, [phase]);
+
+  useLayoutEffect(() => {
+    const panel = musicPlayerPanelRef.current;
+
+    if (!panel) {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+
+      if (entry) {
+        setMusicPlayerHeight(entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height);
+      }
+    });
+
+    observer.observe(panel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const closeMenu = () => {
     setMenuOpen(false);
   };
@@ -314,6 +505,11 @@ function HomePage() {
     navigate("/merch");
   }, 500);
 };
+
+  const dismissMerchShowcase = (event) => {
+    event.preventDefault();
+    setMerchDismissed(true);
+  };
 
   const activeVideo = musicVideos.find((video) => {
     return video.id === activeVideoId;
@@ -362,7 +558,9 @@ function HomePage() {
             )}
 
             <a
-              className="brand"
+              className={`brand ${
+                brandVisible ? "brand--visible" : ""
+              }`}
               href="#top"
               aria-label="Dystopia kezdőlap"
               onClick={closeMenu}
@@ -451,12 +649,68 @@ function HomePage() {
             </Link>
           </div>
 
+          {merchSlides.length > 0 && !merchDismissed && (
+            <aside
+              className={`merch-showcase ${
+                merchWidgetVisible ? "merch-showcase--visible" : ""
+              }`}
+              aria-label="Elérhető merch"
+            >
+              <button
+                type="button"
+                className="merch-showcase-close"
+                aria-label="Bezárás"
+                onClick={dismissMerchShowcase}
+              >
+                ×
+              </button>
+
+              <Link className="merch-showcase-card" to="/merch" onClick={openMerch}>
+
+                <div className="merch-showcase-frame">
+                  {merchSlides.map((slide, index) => (
+                    <div
+                      key={slide.id}
+                      className={`merch-showcase-slide ${
+                        index === merchSlideIndex
+                          ? "merch-showcase-slide--active"
+                          : ""
+                      }`}
+                      style={{ backgroundImage: `url(${slide.image})` }}
+                    />
+                  ))}
+
+                  <div className="merch-showcase-edge-blur" />
+
+                  <div className="merch-showcase-title">
+                    <span>{merchSlides[merchSlideIndex]?.name}</span>
+                  </div>
+                </div>
+
+                {merchSlides.length > 1 && (
+                  <div className="merch-showcase-dots" aria-hidden="true">
+                    {merchSlides.map((slide, index) => (
+                      <span
+                        key={slide.id}
+                        className={
+                          index === merchSlideIndex
+                            ? "merch-showcase-dot--active"
+                            : ""
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </Link>
+            </aside>
+          )}
+
           <div className="scroll-indicator" aria-hidden="true">
             <span />
           </div>
         </section>
 
-        <section id="bio" className="bio-section">
+        <section id="bio" className="bio-section" ref={bioSectionRef}>
           <div className="bio-container">
             <div className="bio-heading">
               <p className="section-label">A zenekarról</p>
@@ -492,23 +746,26 @@ function HomePage() {
                 A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
               </p>
 
-              <p>
-                Ide még jöhetne akár egy tag bemutatás vagy valami hasonló
-              </p>
             </div>
           </div>
         </section>
 
-        <section id="music" className="music-section">
-          <div className="music-container">
-            <div className="music-player-panel">
+        <section id="music" className="music-section" ref={musicSectionRef}>
+          <div
+            className="music-container"
+            style={{
+              "--music-player-height": musicPlayerHeight
+                ? `${musicPlayerHeight}px`
+                : undefined,
+            }}
+          >
+            <div className="music-header">
               <p className="section-label">Zene</p>
               <h2>Zene</h2>
               <span className="music-line" />
-              <p className="music-intro">
-                Ide felőlem listázhatunk több videót is, akár egész albumot vagy valamit. Mit tudom én...
-              </p>
+            </div>
 
+            <div className="music-player-panel" ref={musicPlayerPanelRef}>
               <div className="music-player-shell">
                 <div className="music-player-frame">
                   <iframe
@@ -568,15 +825,12 @@ function HomePage() {
           </div>
         </section>
 
-        <section id="contact" className="contact-section">
+        <section id="contact" className="contact-section" ref={contactSectionRef}>
           <div className="contact-container">
             <div className="contact-heading">
               <p className="section-label">Kapcsolat</p>
               <h2>Kapcsolat</h2>
               <span className="contact-line" />
-              <p className="contact-intro">
-                Ide kéne valami kapcsolat sztori, ami leírja miért kereshetnek minket vagy valami.
-              </p>
 
               <div className="contact-social-block">
                 <p className="contact-social-heading">Megtalálsz minket itt is:</p>
