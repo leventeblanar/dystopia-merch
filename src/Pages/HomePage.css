@@ -1441,17 +1441,18 @@
   }
 
   .contact-socials {
-    gap: 10px;
+    gap: clamp(8px, 2.5vw, 10px);
   }
 
   .contact-social-link {
-    width: 52px;
-    height: 52px;
+    box-sizing: border-box;
+    width: clamp(44px, 13vw, 52px);
+    height: clamp(44px, 13vw, 52px);
   }
 
   .contact-social-link svg {
-    width: 23px;
-    height: 23px;
+    width: clamp(20px, 5.8vw, 23px);
+    height: clamp(20px, 5.8vw, 23px);
   }
 
   .contact-line {
