@@ -480,7 +480,7 @@ function HomePage() {
                 A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
               </p>
 
-              <p>
+              <p className="long-bio-desc">
                 A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
 
                 Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.

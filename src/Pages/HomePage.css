@@ -998,6 +998,11 @@
 
 .bio-content p {
   margin: 0 0 24px;
+  text-align: center;
+}
+
+.bio-content .long-bio-desc {
+  letter-spacing: 3px;
 }
 
 .bio-content p:last-child {
