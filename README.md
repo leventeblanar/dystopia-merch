@@ -1,16 +1,57 @@
-# React + Vite
+# Dystopia Merch
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ez a repo nem csak egy sima Vite frontend. A merch API a Cloudflare Workerbol jon, a statikus fajlokat pedig a Worker `ASSETS` bindinggel szolgaltatja ki.
 
-Currently, two official plugins are available:
+## Fontos kulonbseg
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `npm run build`
+  csak a `dist/` statikus buildet kesziti el
+- `npm run preview`
+  csak sima Vite statikus preview, a Worker API nelkul
+- `npm run cf:dev`
+  lokalis Worker + asset futtatas
+- `npm run cf:deploy`
+  build + Cloudflare Worker deploy
 
-## React Compiler
+Ha a merch oldalon `Unexpected token '<'` vagy `<!doctype html>` hiba jon a `/api/products` vegpontrol, akkor szinte biztosan HTML erkezik JSON helyett. Ez tipikusan akkor tortenik, ha:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- csak a statikus build fut
+- `vite preview` alatt nezed a merch oldalt
+- a deploy nem a Workerre megy, hanem csak asset hostolas tortent
 
-## Expanding the ESLint configuration
+## Helyes lokalis futtatas
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run cf:dev
+```
+
+Ezutan ellenorizd:
+
+```bash
+curl http://127.0.0.1:8787/api/health
+curl http://127.0.0.1:8787/api/products
+```
+
+Mindkettonek JSON-t kell visszaadnia.
+
+## Helyes deploy
+
+```bash
+npm run cf:deploy
+```
+
+Utana ellenorizd a publikus endpointokat:
+
+```bash
+curl https://<deployment-domain>/api/health
+curl https://<deployment-domain>/api/products
+```
+
+Elvart eredmeny:
+
+- `/api/health` -> JSON
+- `/api/products` -> JSON
+
+Ha a `/api/products` 500-at ad, akkor mar a Worker fut, csak a D1 adatbazis vagy a tablakszerkezet hibas.
+Ha `<!doctype html>` jon vissza, akkor route/deploy problema van, nem React build problema.

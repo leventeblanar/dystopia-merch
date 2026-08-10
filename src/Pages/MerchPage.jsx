@@ -103,9 +103,18 @@ function MerchPage() {
     const loadProducts = async () => {
       try {
         const response = await fetch("/api/products");
+        const contentType = response.headers.get("content-type") ?? "";
 
         if (!response.ok) {
           throw new Error("A termékek betöltése sikertelen.");
+        }
+
+        if (!contentType.includes("application/json")) {
+          const responsePreview = (await response.text()).slice(0, 120).trim();
+
+          throw new Error(
+            `Az API nem JSON valaszt adott a /api/products vegponton. Valoszinuleg statikus build vagy hibas Worker route fut. Valasz eleje: ${responsePreview || "ures valasz"}`,
+          );
         }
 
         const data = await response.json();
