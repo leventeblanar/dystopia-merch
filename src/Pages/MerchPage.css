@@ -820,11 +820,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.035);
 
   backdrop-filter:
-    blur(26px)
+    blur(14px)
     saturate(115%);
 
   -webkit-backdrop-filter:
-    blur(26px)
+    blur(14px)
     saturate(115%);
 
   animation:
