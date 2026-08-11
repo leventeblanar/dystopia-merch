@@ -1,15 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext.jsx";
 
 import dystopiaLogo from "../assets/dystopia-logo.png";
 
 import "./MerchPage.css";
 
 function ProductCard({ product }) {
+  const { addToCart } = useCart();
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [quantity, setQuantity] = useState(1)
+
 
   const images = product.images ?? [];
   const currentImage = images[currentImageIndex] ?? null;
+
+  const selectedVariant =
+  product.variants?.find(
+    (variant) => variant.id === selectedVariantId
+  ) ?? null;
 
   const showNextImage = () => {
     if (images.length <= 1) {
@@ -17,6 +28,44 @@ function ProductCard({ product }) {
     }
 
     setCurrentImageIndex((previousIndex) => (previousIndex + 1) % images.length);
+  };
+
+  const decreaseQuantity = () => {
+    setQuantity((currentQuantity) =>
+      Math.max(1, currentQuantity - 1)
+    );
+  };
+
+  const increaseQuantity = () => {
+    if (!selectedVariant) {
+      return;
+    }
+
+    setQuantity((currentQuantity) =>
+      Math.min(
+        selectedVariant.stock,
+        currentQuantity + 1
+      )
+    );
+  };
+
+  const handleAddToCart = () => {
+  if (!selectedVariant) {
+    return;
+  }
+
+  const cartItem = {
+    productId: product.id,
+    variantId: selectedVariant.id,
+    name: product.name,
+    size: selectedVariant.size,
+    quantity,
+    price: product.price,
+    image: product.images?.[0]?.url ?? null,
+    stock: selectedVariant.stock,
+  };
+
+  addToCart(cartItem);
   };
 
   return (
@@ -71,25 +120,99 @@ function ProductCard({ product }) {
           </p>
 
           <div className="product-variants">
-            {product.variants?.map((variant) => (
-              <span
-                key={variant.id}
-                className={variant.stock > 0 ? "" : "sold-out"}
-              >
-                {variant.size}
-              </span>
-            ))}
+            {product.variants?.map((variant) => {
+              const isSelected =
+                selectedVariantId === variant.id;
+
+              const isSoldOut =
+                variant.stock <= 0;
+
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  className={`product-variant-button ${
+                    isSelected
+                      ? "product-variant-button--selected"
+                      : ""
+                  } ${
+                    isSoldOut
+                      ? "product-variant-button--sold-out"
+                      : ""
+                  }`}
+                  disabled={isSoldOut}
+                  onClick={() => {
+                    setSelectedVariantId(variant.id);
+                    setQuantity(1);
+                  }}
+                >
+                  {variant.size}
+                </button>
+              );
+            })}
           </div>
         </div>
+        <div className="product-quantity-block">
+          <p className="product-quantity-label">
+            Darabszám
+          </p>
+
+          <div className="product-quantity">
+            <button
+              type="button"
+              onClick={decreaseQuantity}
+              disabled={
+                !selectedVariant ||
+                quantity <= 1
+              }
+              aria-label="Darabszám csökkentése"
+            >
+              −
+            </button>
+
+            <span>{quantity}</span>
+
+            <button
+              type="button"
+              onClick={increaseQuantity}
+              disabled={
+                !selectedVariant ||
+                quantity >= selectedVariant.stock
+              }
+              aria-label="Darabszám növelése"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <button
+          className="add-to-cart-button"
+          type="button"
+          disabled={!selectedVariant}
+          onClick={handleAddToCart}
+          >
+          Kosárba
+        </button>
       </div>
     </article>
   );
 }
 
 function MerchPage() {
+  const { cartItems, cartCount } = useCart();
+  const [cartOpen, setCartOpen] = useState(false);
+  const cartTotal = cartItems.reduce(
+    (total, item) =>
+      total + Number(item.price) * item.quantity,
+    0
+  );
+  
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+
 
   useEffect(() => {
     window.scrollTo({
@@ -141,9 +264,93 @@ function MerchPage() {
         <img src={dystopiaLogo} alt="Dystopia" />
       </Link>
 
+      <div className="merch-header-actions">
       <Link className="merch-back" to="/">
         Vissza az oldalra
       </Link>
+
+      <button
+        className="merch-cart-button"
+        type="button"
+        aria-label={`Kosár, ${cartCount} termék`}
+        aria-expanded={cartOpen}
+        onClick={() => {
+          setCartOpen((currentOpen) => !currentOpen);
+        }}
+      >
+        <span className="merch-cart-icon">🛒</span>
+
+        {cartCount > 0 && (
+          <span className="merch-cart-count">
+            {cartCount}
+          </span>
+        )}
+      </button>
+
+      {cartOpen && (
+        <div className="mini-cart">
+          <div className="mini-cart-header">
+            <span>Kosár</span>
+            <span>{cartCount} db</span>
+          </div>
+
+          {cartItems.length === 0 ? (
+            <p className="mini-cart-empty">
+              A kosarad még üres.
+            </p>
+          ) : (
+            <>
+              <div className="mini-cart-items">
+                {cartItems.map((item) => (
+                  <div
+                    className="mini-cart-item"
+                    key={item.variantId}
+                  >
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt=""
+                      />
+                    )}
+
+                    <div className="mini-cart-item-info">
+                      <strong>{item.name}</strong>
+
+                      <span>
+                        {item.size} · {item.quantity} db
+                      </span>
+
+                      <span>
+                        {(
+                          Number(item.price) *
+                          item.quantity
+                        ).toLocaleString("hu-HU")} Ft
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mini-cart-total">
+                <span>Összesen</span>
+
+                <strong>
+                  {cartTotal.toLocaleString("hu-HU")} Ft
+                </strong>
+              </div>
+
+              <button
+                className="mini-cart-link"
+                type="button"
+              >
+                Kosárhoz
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+    </div>
     </header>
 
     <section className="merch-intro">

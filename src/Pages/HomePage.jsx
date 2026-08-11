@@ -141,6 +141,59 @@ function SocialIcon({ icon }) {
   }
 }
 
+const pressKitItems = [
+  {
+    key: "epk",
+    label: "EPK",
+    sub: "Electronic Press Kit",
+    icon: "epk",
+  },
+  {
+    key: "logos",
+    label: "Logók és plakátanyagok",
+    sub: "Zenekari logó, plakátanyagok",
+    icon: "logos",
+  },
+  {
+    key: "rider",
+    label: "Rider",
+    sub: "Technikai rider",
+    icon: "rider",
+  },
+];
+
+function PressKitIcon({ icon }) {
+  switch (icon) {
+    case "epk":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="3" width="13" height="17" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <path d="M7.3 7.8h6.4M7.3 11.2h6.4M7.3 14.6h4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" />
+          <circle cx="17.3" cy="17.3" r="3.3" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          <path d="m19.4 19.4 1.8 1.8" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" />
+        </svg>
+      );
+    case "logos":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3.5" y="5" width="17" height="14" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <circle cx="8.3" cy="9.8" r="1.5" fill="currentColor" />
+          <path d="m5 16.5 4.3-4.7 3.3 3.7 2.4-2.8 4 4.1" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+        </svg>
+      );
+    case "rider":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="4" width="14" height="17" rx="1.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+          <rect x="9" y="2.3" width="6" height="3" rx="1" fill="currentColor" />
+          <path d="M8.3 11h7.4M8.3 14.4h7.4M8.3 17.8h4.4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.4" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 const driftDirections = ["left", "right", "top", "bottom"];
 const HOME_INTRO_SESSION_KEY = "dystopia-home-intro-seen";
 
@@ -762,7 +815,7 @@ function HomePage() {
             <div className="music-header">
               <p className="section-label">Zene</p>
               <h2>Zene</h2>
-              <span className="music-line" />
+              <span className="music-line"/>
             </div>
 
             <div className="music-player-panel" ref={musicPlayerPanelRef}>
@@ -860,6 +913,26 @@ function HomePage() {
                 <h3>Koncertszervezés</h3>
                 <p>booking@dystopia.hu</p>
                 <p>+36 30 123 4567</p>
+
+                <div className="press-kit-list" aria-label="Sajtó- és technikai anyagok">
+                  {pressKitItems.map((item) => (
+                    <a
+                      key={item.key}
+                      className="press-kit-item"
+                      href="#"
+                      onClick={(event) => event.preventDefault()}
+                      title={`${item.label} – hamarosan elérhető`}
+                    >
+                      <span className="press-kit-item-icon" aria-hidden="true">
+                        <PressKitIcon icon={item.icon} />
+                      </span>
+                      <span className="press-kit-item-copy">
+                        <span className="press-kit-item-label">{item.label}</span>
+                        <span className="press-kit-item-sub">{item.sub}</span>
+                      </span>
+                    </a>
+                  ))}
+                </div>
               </article>
             </div>
           </div>

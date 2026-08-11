@@ -7,13 +7,10 @@ mobil
 - Videókra cserélni a hátteret
 
 Zene:
-- Ide felőlem listázhatunk több videót is, akár egész albumot vagy valamit. Mit tudom én...
 - playlist felső option border dissap -> kijelölés miatt
 - Videók címe alatt | utáni rész
-- Ide felőlem listázhatunk több videót is, akár egész albumot vagy valamit. Mit tudom én...
 
-Kapcsolat
-- a dobozba bele: EPK letöltési link (Logo, Rider)
+!!! A szekció átmeneteket megvilágítja a kurzor animáció
 
 Merch:
 - Képen slideshowban - további kepek preview (mobilon swipeolható legyen - weben nyilakkal)
