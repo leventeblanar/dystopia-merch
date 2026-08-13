@@ -57,10 +57,88 @@
   visibility: hidden;
 }
 
+.intro-smoke {
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+
+  pointer-events: none;
+}
+
+.intro-smoke-layer {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+
+  mix-blend-mode: screen;
+  opacity: 0;
+
+  background-repeat: no-repeat;
+
+  filter: blur(32px);
+}
+
+.intro-smoke-layer--one {
+  background:
+    radial-gradient(
+      circle at 24% 58%,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.08) 16%,
+      rgba(255, 255, 255, 0.02) 30%,
+      transparent 46%
+    ),
+    radial-gradient(
+      circle at 62% 44%,
+      rgba(176, 24, 24, 0.16) 0%,
+      rgba(176, 24, 24, 0.06) 18%,
+      transparent 40%
+    );
+
+  animation: smokeDriftOne 14s ease-in-out infinite;
+}
+
+.intro-smoke-layer--two {
+  background:
+    radial-gradient(
+      ellipse at 72% 64%,
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(255, 255, 255, 0.06) 20%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 34% 34%,
+      rgba(120, 120, 120, 0.12) 0%,
+      rgba(120, 120, 120, 0.04) 18%,
+      transparent 42%
+    );
+
+  animation: smokeDriftTwo 18s ease-in-out infinite;
+}
+
+.intro-smoke-layer--three {
+  background:
+    radial-gradient(
+      ellipse at 50% 52%,
+      rgba(255, 255, 255, 0.11) 0%,
+      rgba(255, 255, 255, 0.04) 22%,
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 82% 28%,
+      rgba(176, 24, 24, 0.11) 0%,
+      rgba(176, 24, 24, 0.03) 16%,
+      transparent 34%
+    );
+
+  animation: smokeDriftThree 22s ease-in-out infinite;
+}
+
 .logo-container {
   position: relative;
+  z-index: 1;
 
-  width: min(56vw, 520px);
+  width: min(46vw, 410px);
 
   animation:
     logoReveal 2.2s
@@ -2331,6 +2409,69 @@ span.merch-showcase-dot--active {
     transform: translate(-2px, 1px);
 
     clip-path: inset(12% 0 68% 0);
+  }
+}
+
+@keyframes smokeDriftOne {
+  0% {
+    opacity: 0;
+    transform: translate3d(-4%, 10%, 0) scale(1.02) rotate(-4deg);
+  }
+
+  18% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.75;
+    transform: translate3d(3%, -5%, 0) scale(1.12) rotate(2deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(8%, -12%, 0) scale(1.2) rotate(8deg);
+  }
+}
+
+@keyframes smokeDriftTwo {
+  0% {
+    opacity: 0;
+    transform: translate3d(10%, 4%, 0) scale(0.98) rotate(6deg);
+  }
+
+  22% {
+    opacity: 0.42;
+  }
+
+  58% {
+    opacity: 0.64;
+    transform: translate3d(-4%, -8%, 0) scale(1.1) rotate(-3deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-12%, -14%, 0) scale(1.18) rotate(-8deg);
+  }
+}
+
+@keyframes smokeDriftThree {
+  0% {
+    opacity: 0;
+    transform: translate3d(-6%, 14%, 0) scale(0.94);
+  }
+
+  28% {
+    opacity: 0.35;
+  }
+
+  60% {
+    opacity: 0.52;
+    transform: translate3d(2%, -4%, 0) scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(10%, -10%, 0) scale(1.16);
   }
 }
 

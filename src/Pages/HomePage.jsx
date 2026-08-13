@@ -577,6 +577,12 @@ function HomePage() {
             phase === "leaving" ? "intro--leaving" : ""
           }`}
         >
+          <div className="intro-smoke" aria-hidden="true">
+            <span className="intro-smoke-layer intro-smoke-layer--one" />
+            <span className="intro-smoke-layer intro-smoke-layer--two" />
+            <span className="intro-smoke-layer intro-smoke-layer--three" />
+          </div>
+
           <div className="logo-container">
             <img
               className="dystopia-logo logo-glitch"
