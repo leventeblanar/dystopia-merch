@@ -1,0 +1,338 @@
+.admin-page {
+  min-height: 100vh;
+  background: #141414;
+  color: #f5f5f5;
+  padding: 2rem 1.5rem 4rem;
+  font-family: sans-serif;
+}
+
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+}
+
+.admin-back {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+}
+
+.admin-header h1 {
+  font-family: "Cinzel", serif;
+  margin: 0;
+  flex: 1;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-nav button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f5f5f5;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.admin-nav-active {
+  background: #b01818 !important;
+  border-color: #b01818 !important;
+}
+
+.admin-tab {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.admin-tab-header button,
+.admin-product-actions button,
+.admin-order-items + button {
+  background: #b01818;
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-status {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-error {
+  color: #ff6b6b;
+}
+
+.admin-form {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-field-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 160px;
+}
+
+.admin-field--narrow {
+  flex: 0 0 100px;
+}
+
+.admin-field label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-field input,
+.admin-field textarea {
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.admin-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: center;
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-form-actions button {
+  background: #b01818;
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-button-secondary {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.admin-button-danger {
+  background: transparent;
+  border: 1px solid #ff6b6b;
+  color: #ff6b6b;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-product-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-product-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-product-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #1f1f1f;
+}
+
+.admin-product-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.15rem;
+}
+
+.admin-product-info span {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.admin-badge-active {
+  color: #6bd97a !important;
+}
+
+.admin-badge-inactive {
+  color: #ff6b6b !important;
+}
+
+.admin-product-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-product-actions button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f5f5f5;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-product-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-subheading {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 0.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-table--compact input {
+  width: 80px;
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f5f5f5;
+  padding: 0.3rem;
+  border-radius: 4px;
+}
+
+.admin-inline-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-inline-form input {
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f5f5f5;
+  padding: 0.4rem;
+  border-radius: 4px;
+}
+
+.admin-inline-form button {
+  background: #b01818;
+  border: none;
+  color: #fff;
+  padding: 0.4rem 0.9rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-image-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.admin-image-item img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #1f1f1f;
+}
+
+.admin-upload-label {
+  display: inline-block;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  color: #f5f5f5;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-order-status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.admin-order-status--pending {
+  background: rgba(255, 200, 0, 0.15);
+  color: #ffc800;
+}
+
+.admin-order-status--paid {
+  background: rgba(107, 217, 122, 0.15);
+  color: #6bd97a;
+}
+
+.admin-order-status--failed,
+.admin-order-status--cancelled {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+
+.admin-order-items {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.admin-order-note {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}

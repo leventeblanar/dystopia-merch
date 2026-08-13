@@ -31,16 +31,70 @@ export function CartProvider({ children }) {
     });
   };
 
+  const removeFromCart = (variantId) => {
+  setCartItems((currentItems) =>
+    currentItems.filter(
+      (item) => item.variantId !== variantId
+    )
+  );
+};
+
+
+const increaseCartQuantity = (variantId) => {
+  setCartItems((currentItems) =>
+    currentItems.map((item) => {
+      if (item.variantId !== variantId) {
+        return item;
+      }
+
+      return {
+        ...item,
+        quantity: Math.min(
+          item.quantity + 1,
+          item.stock
+        ),
+      };
+    })
+  );
+};
+
+
+const decreaseCartQuantity = (variantId) => {
+  setCartItems((currentItems) =>
+    currentItems.map((item) => {
+      if (item.variantId !== variantId) {
+        return item;
+      }
+
+      return {
+        ...item,
+        quantity: Math.max(
+          item.quantity - 1,
+          1
+        ),
+      };
+    })
+  );
+};
+
   const cartCount = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
   );
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
         addToCart,
+        removeFromCart,
+        increaseCartQuantity,
+        decreaseCartQuantity,
+        clearCart,
         cartCount,
       }}
     >

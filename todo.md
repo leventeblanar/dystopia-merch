@@ -27,3 +27,9 @@ Dev domain:
 dystopia-merch.blanar-levente.workers.dev
 
 
+Amit neked kell még csinálnod (.dev.vars fájlban vannak a helyőrzők):
+
+Stripe fiók → teszt mód API kulcs (STRIPE_SECRET_KEY)
+Stripe CLI-vel generált webhook secret lokális teszteléshez (STRIPE_WEBHOOK_SECRET) — stripe listen --forward-to localhost:8787/api/webhooks/stripe
+Resend fiók + verifikált domain + API kulcs (RESEND_API_KEY, RESEND_FROM_EMAIL)
+A rendelés-értesítés célcíme (ORDER_NOTIFICATION_EMAIL)

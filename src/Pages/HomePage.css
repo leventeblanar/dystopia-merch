@@ -60,7 +60,7 @@
 .logo-container {
   position: relative;
 
-  width: min(65vw, 620px);
+  width: min(56vw, 520px);
 
   animation:
     logoReveal 2.2s
@@ -75,16 +75,18 @@
   height: auto;
 
   filter:
-    invert(1)
-    brightness(0.78)
-    contrast(1.2)
-    drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+    brightness(1)
+    contrast(1.08)
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.15))
+    drop-shadow(0 0 24px rgba(255, 255, 255, 0.08));
 }
 
 .logo-main {
   position: relative;
 
-  animation: metalFlicker 2.4s ease-out forwards;
+  animation:
+    metalFlicker 2.4s ease-out forwards,
+    logoPulse 4.6s ease-in-out 1.9s infinite;
 }
 
 .logo-glitch {
@@ -95,11 +97,13 @@
   pointer-events: none;
 
   filter:
-    invert(1)
-    brightness(0.65)
+    brightness(0.7)
+    contrast(1.16)
     sepia(1)
-    saturate(5)
-    hue-rotate(325deg);
+    saturate(6)
+    hue-rotate(325deg)
+    drop-shadow(0 0 10px rgba(255, 72, 72, 0.28))
+    drop-shadow(0 0 22px rgba(255, 255, 255, 0.1));
 
   animation: glitchHit 2.4s steps(1) forwards;
 }
@@ -319,9 +323,27 @@
   height: auto;
 
   filter:
-    invert(1)
-    brightness(0.9)
+    brightness(1)
+    contrast(1.04)
     drop-shadow(0 0 8px rgba(255, 255, 255, 0.12));
+
+  transform-origin: center;
+
+  animation: brandFloat 5.4s ease-in-out infinite;
+
+  transition:
+    filter 220ms ease,
+    transform 220ms ease;
+}
+
+.brand:hover img,
+.brand:focus-visible img {
+  filter:
+    brightness(1.04)
+    contrast(1.08)
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.18));
+
+  transform: translateY(-1px) scale(1.015);
 }
 
 /* -------------------- */
@@ -447,45 +469,7 @@
   letter-spacing: 0.28em;
 }
 
-.hero-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 
-  min-width: 210px;
-  min-height: 52px;
-
-  padding: 16px 26px;
-
-  border: 1px solid rgba(255, 255, 255, 0.35);
-
-  color: #fff;
-
-  text-decoration: none;
-  text-transform: uppercase;
-
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-
-  background: rgba(0, 0, 0, 0.25);
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  transition:
-    background 250ms ease,
-    border-color 250ms ease,
-    transform 250ms ease;
-}
-
-.hero-button:hover {
-  border-color: #a41414;
-
-  background: #a41414;
-
-  transform: translateY(-3px);
-}
 
 /* -------------------- */
 /* MERCH SHOWCASE       */
@@ -493,20 +477,91 @@
 
 .merch-showcase {
   position: absolute;
-  top: 42%;
-  right: 9vw;
+
+  top: 20%;
+  right: clamp(5vw, 8vw, 10vw);
   z-index: 5;
 
-  width: min(260px, 20vw);
+  width: clamp(290px, 22vw, 350px);
+
+  padding: 24px;
+
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(125, 18, 34, 0.16),
+      transparent 46%
+    ),
+    rgba(10, 10, 12, 0.62);
+
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.48),
+    0 8px 30px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 
   transform: translateY(-50%);
 
-  animation: heroReveal 1.3s ease 380ms both;
+  animation:
+    heroReveal
+    1.3s ease
+    380ms both;
 }
+
 
 .merch-showcase-close {
   display: none;
 }
+
+
+.merch-showcase-copy {
+  margin-bottom: 20px;
+}
+
+
+.merch-showcase-kicker {
+  margin: 0 0 10px;
+
+  color: #a91c32;
+
+  text-transform: uppercase;
+
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+}
+
+
+.merch-showcase-copy h2 {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.92);
+
+  text-transform: uppercase;
+
+  font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+  font-weight: 600;
+
+  line-height: 1.35;
+  letter-spacing: 0.07em;
+}
+
+
+.merch-showcase-copy h2 span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: rgba(255, 255, 255, 0.46);
+
+  font-size: 0.78em;
+  font-weight: 500;
+}
+
 
 .merch-showcase-card {
   display: block;
@@ -515,18 +570,23 @@
   text-decoration: none;
 }
 
+
 .merch-showcase-frame {
   position: relative;
   isolation: isolate;
+
   overflow: hidden;
 
   aspect-ratio: 3 / 4;
 
-  background: transparent;
+  border-radius: 14px;
+
+  background: rgba(5, 5, 7, 0.7);
 
   box-shadow:
-    0 24px 55px rgba(0, 0, 0, 0.4);
+    0 18px 44px rgba(0, 0, 0, 0.34);
 }
+
 
 .merch-showcase-slide {
   position: absolute;
@@ -541,30 +601,33 @@
 
   transform: scale(1.04);
 
-  -webkit-mask-image: radial-gradient(
-    ellipse 88% 92% at center,
-    #000 0%,
-    #000 52%,
-    rgba(0, 0, 0, 0.9) 64%,
-    rgba(0, 0, 0, 0.55) 76%,
-    rgba(0, 0, 0, 0.2) 88%,
-    transparent 100%
-  );
+  -webkit-mask-image:
+    radial-gradient(
+      ellipse 88% 92% at center,
+      #000 0%,
+      #000 52%,
+      rgba(0, 0, 0, 0.9) 64%,
+      rgba(0, 0, 0, 0.55) 76%,
+      rgba(0, 0, 0, 0.2) 88%,
+      transparent 100%
+    );
 
-  mask-image: radial-gradient(
-    ellipse 88% 92% at center,
-    #000 0%,
-    #000 52%,
-    rgba(0, 0, 0, 0.9) 64%,
-    rgba(0, 0, 0, 0.55) 76%,
-    rgba(0, 0, 0, 0.2) 88%,
-    transparent 100%
-  );
+  mask-image:
+    radial-gradient(
+      ellipse 88% 92% at center,
+      #000 0%,
+      #000 52%,
+      rgba(0, 0, 0, 0.9) 64%,
+      rgba(0, 0, 0, 0.55) 76%,
+      rgba(0, 0, 0, 0.2) 88%,
+      transparent 100%
+    );
 
   transition:
     opacity 900ms ease,
     transform 6s ease;
 }
+
 
 .merch-showcase-slide--active {
   opacity: 1;
@@ -572,9 +635,12 @@
   transform: scale(1);
 }
 
-.merch-showcase-card:hover .merch-showcase-slide--active {
+
+.merch-showcase-card:hover
+.merch-showcase-slide--active {
   transform: scale(1.02);
 }
+
 
 .merch-showcase-edge-blur {
   position: absolute;
@@ -583,53 +649,76 @@
 
   pointer-events: none;
 
-  backdrop-filter: blur(16px) brightness(0.62);
-  -webkit-backdrop-filter: blur(16px) brightness(0.62);
+  backdrop-filter:
+    blur(16px)
+    brightness(0.62);
 
-  -webkit-mask-image: radial-gradient(
-    ellipse 78% 78% at center,
-    transparent 34%,
-    rgba(0, 0, 0, 0.18) 48%,
-    rgba(0, 0, 0, 0.5) 66%,
-    rgba(0, 0, 0, 0.82) 84%,
-    #000 100%
-  );
+  -webkit-backdrop-filter:
+    blur(16px)
+    brightness(0.62);
 
-  mask-image: radial-gradient(
-    ellipse 78% 78% at center,
-    transparent 34%,
-    rgba(0, 0, 0, 0.18) 48%,
-    rgba(0, 0, 0, 0.5) 66%,
-    rgba(0, 0, 0, 0.82) 84%,
-    #000 100%
-  );
+  -webkit-mask-image:
+    radial-gradient(
+      ellipse 78% 78% at center,
+      transparent 34%,
+      rgba(0, 0, 0, 0.18) 48%,
+      rgba(0, 0, 0, 0.5) 66%,
+      rgba(0, 0, 0, 0.82) 84%,
+      #000 100%
+    );
+
+  mask-image:
+    radial-gradient(
+      ellipse 78% 78% at center,
+      transparent 34%,
+      rgba(0, 0, 0, 0.18) 48%,
+      rgba(0, 0, 0, 0.5) 66%,
+      rgba(0, 0, 0, 0.82) 84%,
+      #000 100%
+    );
+
+  opacity: 1;
 
   transition:
     backdrop-filter 300ms ease,
     -webkit-backdrop-filter 300ms ease,
     opacity 300ms ease;
-
-  opacity: 1;
 }
 
-.merch-showcase-card:hover .merch-showcase-edge-blur {
-  backdrop-filter: blur(12px) brightness(0.72);
-  -webkit-backdrop-filter: blur(12px) brightness(0.72);
+
+.merch-showcase-card:hover
+.merch-showcase-edge-blur {
+  backdrop-filter:
+    blur(12px)
+    brightness(0.72);
+
+  -webkit-backdrop-filter:
+    blur(12px)
+    brightness(0.72);
 }
+
 
 .merch-showcase-title {
   position: absolute;
+
   right: 0;
   bottom: 0;
   left: 0;
+
   z-index: 2;
 
   padding: 18px 14px 14px;
 
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.88) 100%);
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.88) 100%
+    );
 
   text-align: center;
 }
+
 
 .merch-showcase-title span {
   color: #fff;
@@ -638,17 +727,21 @@
 
   font-size: 0.82rem;
   font-weight: 700;
+
   letter-spacing: 0.1em;
   line-height: 1.3;
 }
 
+
 .merch-showcase-dots {
   display: flex;
   justify-content: center;
-  gap: 6px;
 
-  margin-top: 14px;
+  gap: 7px;
+
+  margin-top: 12px;
 }
+
 
 .merch-showcase-dots span {
   width: 5px;
@@ -656,55 +749,116 @@
 
   border-radius: 999px;
 
-  background: rgba(255, 255, 255, 0.28);
+  background:
+    rgba(255, 255, 255, 0.24);
 
   transition:
     background 250ms ease,
     transform 250ms ease;
 }
 
-.merch-showcase-dots span.merch-showcase-dot--active {
-  background: #b01818;
 
-  transform: scale(1.3);
+.merch-showcase-dots
+span.merch-showcase-dot--active {
+  background: #9f2639;
+
+  transform: scale(1.35);
+}
+
+
+.merch-showcase-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 18px;
+  padding-top: 16px;
+
+  color: rgba(255, 255, 255, 0.62);
+
+  text-transform: uppercase;
+
+  font-size: 0.62rem;
+  font-weight: 700;
+
+  letter-spacing: 0.18em;
+
+  transition:
+    color 250ms ease;
+}
+
+
+.merch-showcase-cta > span {
+  font-size: 1rem;
+
+  transition:
+    transform 300ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+
+.merch-showcase-card:hover
+.merch-showcase-cta {
+  color: #fff;
+}
+
+
+.merch-showcase-card:hover
+.merch-showcase-cta > span {
+  transform: translateX(5px);
 }
 
 @media (max-width: 720px) {
   .merch-showcase {
     position: fixed;
+
     top: 50%;
     right: auto;
     left: 50%;
+
     z-index: 40;
 
-    width: min(78vw, 320px);
+    width: min(84vw, 340px);
+
+    padding: 20px;
 
     opacity: 0;
     visibility: hidden;
+
     pointer-events: none;
 
-    transform: translate(-50%, -50%) scale(0.92);
+    transform:
+      translate(-50%, -50%)
+      scale(0.92);
 
     animation: none;
 
     transition:
       opacity 500ms ease,
-      transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 500ms
+        cubic-bezier(0.22, 1, 0.36, 1),
       visibility 500ms ease;
   }
+
 
   .merch-showcase--visible {
     opacity: 1;
     visibility: visible;
+
     pointer-events: auto;
 
-    transform: translate(-50%, -50%) scale(1);
+    transform:
+      translate(-50%, -50%)
+      scale(1);
   }
+
 
   .merch-showcase-close {
     position: absolute;
-    top: -14px;
-    right: -14px;
+
+    top: -12px;
+    right: -12px;
+
     z-index: 3;
 
     display: flex;
@@ -714,16 +868,45 @@
     width: 32px;
     height: 32px;
 
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0;
+    border: 0;
     border-radius: 999px;
 
-    background: rgba(0, 0, 0, 0.88);
+    background:
+      rgba(20, 18, 21, 0.95);
+
     color: #fff;
 
     font-size: 1.1rem;
     line-height: 1;
 
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4);
+
     cursor: pointer;
+  }
+
+
+  .merch-showcase-copy {
+    margin-bottom: 16px;
+  }
+
+
+  .merch-showcase-copy h2 {
+    font-size: 1rem;
+  }
+
+
+  .merch-showcase-frame {
+    max-height: 52vh;
+
+    aspect-ratio: 3 / 4;
+  }
+
+
+  .merch-showcase-cta {
+    margin-top: 14px;
+    padding-top: 12px;
   }
 }
 
@@ -1121,18 +1304,31 @@
   position: relative;
   z-index: 1;
 
-  display: grid;
-  grid-template-columns: minmax(420px, 1fr) minmax(420px, 1.1fr);
-  gap: clamp(60px, 6vw, 110px);
-
   width: 100%;
   max-width: 1450px;
 
   margin: 0 auto;
 }
 
+
 .bio-heading {
-  align-self: start;
+  margin-bottom: 52px;
+}
+
+
+.bio-main {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  align-items: start;
+
+  gap:
+    clamp(60px, 6vw, 110px);
+
+  width: 100%;
 }
 
 .section-label {
@@ -1166,15 +1362,13 @@
   overflow: hidden;
 
   width: 100%;
-  max-width: 680px;
-  margin: 52px 0 0;
+
+  margin: 0;
 
   aspect-ratio: 3 / 2;
 
   background: transparent;
 }
-
-/* Ugyanaz a kép elmosva, a fő kép mögött */
 
 .bio-photo::before {
   content: "";
@@ -1275,6 +1469,9 @@
 }
 
 .bio-content {
+  align-self: start;
+
+  width: 100%;
   max-width: 700px;
 
   color: rgba(255, 255, 255, 0.64);
@@ -1289,10 +1486,109 @@
 }
 
 .bio-content .long-bio-desc {
+  margin-bottom: 0;
+
   letter-spacing: 3px;
 }
 
-.bio-content p:last-child {
+.bio-details {
+  display: grid;
+
+  grid-template-rows: 0fr;
+
+  opacity: 0;
+
+  transition:
+    grid-template-rows 600ms
+      cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 400ms ease;
+}
+
+
+.bio-details-inner {
+  overflow: hidden;
+}
+
+
+.bio-details--open {
+  grid-template-rows: 1fr;
+
+  opacity: 1;
+}
+
+.bio-read-more {
+  display: block;
+
+  margin:
+    12px
+    auto
+    0;
+
+  padding:
+    12px
+    20px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background:
+    radial-gradient(
+      circle at 100% 50%,
+      rgba(150, 24, 40, 0.24),
+      transparent 65%
+    ),
+    rgba(25, 21, 24, 0.62);
+
+  color:
+    rgba(255, 255, 255, 0.78);
+
+  text-transform: uppercase;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+  transition:
+    background 250ms ease,
+    color 250ms ease,
+    transform 250ms ease,
+    box-shadow 250ms ease;
+}
+
+
+.bio-read-more:hover {
+  background:
+    radial-gradient(
+      circle at 20% 50%,
+      rgba(170, 30, 48, 0.32),
+      rgba(90, 14, 27, 0.14) 40%,
+      transparent 70%
+    ),
+    rgba(31, 24, 28, 0.72);
+
+  color: #fff;
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.34),
+    0 0 28px rgba(130, 15, 30, 0.1);
+}
+
+.long-bio-desc {
   margin-bottom: 0;
 }
 
@@ -1359,7 +1655,7 @@
 
 .contact-heading {
   align-self: start;
-  max-width: 420px;
+  max-width: 520px;
   min-width: 0;
 }
 
@@ -1775,9 +2071,24 @@
       100px;
   }
 
-  .bio-container {
+  .bio-heading {
+    margin-bottom: 48px;
+  }
+
+
+  .bio-main {
     grid-template-columns: 1fr;
+
     gap: 48px;
+  }
+
+
+  .bio-content {
+    width: 100%;
+    max-width: none;
+
+    font-size: 0.95rem;
+    line-height: 1.8;
   }
 
   .bio-heading h2 {
@@ -1919,21 +2230,25 @@
   0% {
     opacity: 0;
 
-    transform: scale(1.08);
+    transform: scale(1.12);
 
-    filter: blur(18px);
+    filter: blur(20px);
   }
 
   45% {
-    opacity: 0.35;
+    opacity: 0.42;
   }
 
   70% {
     opacity: 1;
 
-    transform: scale(0.99);
+    transform: scale(0.975);
 
-    filter: blur(1px);
+    filter: blur(1.4px);
+  }
+
+  84% {
+    transform: scale(1.014);
   }
 
   100% {
@@ -1950,6 +2265,7 @@
   15%,
   24% {
     opacity: 0;
+    transform: translateY(6px);
   }
 
   17% {
@@ -1958,6 +2274,7 @@
 
   27% {
     opacity: 0.8;
+    transform: translateY(0);
   }
 
   30% {
@@ -1967,6 +2284,7 @@
   34%,
   100% {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -2005,6 +2323,46 @@
     transform: translate(3px);
 
     clip-path: inset(42% 0 44% 0);
+  }
+
+  82% {
+    opacity: 0.18;
+
+    transform: translate(-2px, 1px);
+
+    clip-path: inset(12% 0 68% 0);
+  }
+}
+
+@keyframes logoPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter:
+      brightness(1)
+      contrast(1.08)
+      drop-shadow(0 0 12px rgba(255, 255, 255, 0.15))
+      drop-shadow(0 0 24px rgba(255, 255, 255, 0.08));
+  }
+
+  50% {
+    transform: scale(1.012);
+    filter:
+      brightness(1.03)
+      contrast(1.12)
+      drop-shadow(0 0 16px rgba(255, 255, 255, 0.2))
+      drop-shadow(0 0 28px rgba(255, 255, 255, 0.12));
+  }
+}
+
+@keyframes brandFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
   }
 }
 
@@ -2303,15 +2661,6 @@
     font-size: 0.72rem;
     line-height: 1.6;
     letter-spacing: 0.17em;
-  }
-
-  .hero-button {
-    width: 100%;
-    max-width: 320px;
-
-    min-height: 52px;
-
-    padding: 16px 20px;
   }
 
   .scroll-indicator {

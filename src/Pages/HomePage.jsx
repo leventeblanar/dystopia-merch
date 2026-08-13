@@ -225,6 +225,7 @@ function HomePage() {
   const [activeVideoId, setActiveVideoId] = useState(musicVideos[0].id);
   const [musicPlayerHeight, setMusicPlayerHeight] = useState(null);
   const [brandVisible, setBrandVisible] = useState(false);
+  const [bioExpanded, setBioExpanded] = useState(false);
 
   const [leavingForMerch, setLeavingForMerch] = useState(false);
 
@@ -692,20 +693,14 @@ function HomePage() {
             <p className="hero-description">
               Metal from Hungary
             </p>
-
-            <Link
-            className="hero-button"
-            to="/merch"
-            onClick={openMerch}
-            >
-            Merch megtekintése
-            </Link>
           </div>
 
           {merchSlides.length > 0 && !merchDismissed && (
             <aside
               className={`merch-showcase ${
-                merchWidgetVisible ? "merch-showcase--visible" : ""
+                merchWidgetVisible
+                  ? "merch-showcase--visible"
+                  : ""
               }`}
               aria-label="Elérhető merch"
             >
@@ -718,8 +713,22 @@ function HomePage() {
                 ×
               </button>
 
-              <Link className="merch-showcase-card" to="/merch" onClick={openMerch}>
+              <div className="merch-showcase-copy">
+                <p className="merch-showcase-kicker">
+                  Official merch
+                </p>
 
+                <h2>
+                  Támogasd a zenekart.
+                  <span>Viseld a Dystopiát!</span>
+                </h2>
+              </div>
+
+              <Link
+                className="merch-showcase-card"
+                to="/merch"
+                onClick={openMerch}
+              >
                 <div className="merch-showcase-frame">
                   {merchSlides.map((slide, index) => (
                     <div
@@ -729,19 +738,26 @@ function HomePage() {
                           ? "merch-showcase-slide--active"
                           : ""
                       }`}
-                      style={{ backgroundImage: `url(${slide.image})` }}
+                      style={{
+                        backgroundImage: `url(${slide.image})`,
+                      }}
                     />
                   ))}
 
                   <div className="merch-showcase-edge-blur" />
 
                   <div className="merch-showcase-title">
-                    <span>{merchSlides[merchSlideIndex]?.name}</span>
+                    <span>
+                      {merchSlides[merchSlideIndex]?.name}
+                    </span>
                   </div>
                 </div>
 
                 {merchSlides.length > 1 && (
-                  <div className="merch-showcase-dots" aria-hidden="true">
+                  <div
+                    className="merch-showcase-dots"
+                    aria-hidden="true"
+                  >
                     {merchSlides.map((slide, index) => (
                       <span
                         key={slide.id}
@@ -754,6 +770,11 @@ function HomePage() {
                     ))}
                   </div>
                 )}
+
+                <span className="merch-showcase-cta">
+                  Merch megtekintése
+                  <span aria-hidden="true">→</span>
+                </span>
               </Link>
             </aside>
           )}
@@ -763,43 +784,94 @@ function HomePage() {
           </div>
         </section>
 
-        <section id="bio" className="bio-section" ref={bioSectionRef}>
+        <section
+          id="bio"
+          className="bio-section"
+          ref={bioSectionRef}
+        >
           <div className="bio-container">
+
             <div className="bio-heading">
-              <p className="section-label">A zenekarról</p>
+              <p className="section-label">
+                A zenekarról
+              </p>
+
               <h2>Bio</h2>
+
               <span className="bio-line" />
+            </div>
+
+
+            <div className="bio-main">
+
               <figure
                 className="bio-photo"
-                style={{ "--bio-photo-image": `url(${groupPhoto})` }}
+                style={{
+                  "--bio-photo-image": `url(${groupPhoto})`,
+                }}
               >
-              <img
-                src={groupPhoto}
-                alt="A Dystopia zenekar tagjai"
-                loading="lazy"
-                decoding="async"
-              />
-            </figure>
+                <img
+                  src={groupPhoto}
+                  alt="A Dystopia zenekar tagjai"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+
+
+              <div className="bio-content">
+
+                <p className="bio-lead">
+                  A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
+                </p>
+
+
+                <div
+                  id="bio-details"
+                  className={`bio-details ${
+                    bioExpanded
+                      ? "bio-details--open"
+                      : ""
+                  }`}
+                >
+                  <div className="bio-details-inner">
+
+                    <p className="long-bio-desc">
+                      A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
+
+                      Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.
+
+                      Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk.
+
+                      2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatóján. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
+
+                      A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
+                    </p>
+
+                  </div>
+                </div>
+
+
+                <button
+                  className="bio-read-more"
+                  type="button"
+                  aria-expanded={bioExpanded}
+                  aria-controls="bio-details"
+                  onClick={() => {
+                    setBioExpanded(
+                      (current) => !current
+                    );
+                  }}
+                >
+                  {bioExpanded
+                    ? "Kevesebb"
+                    : "Olvass tovább"}
+                </button>
+
+              </div>
+
             </div>
 
-            <div className="bio-content">
-              <p className="bio-lead">
-                A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
-              </p>
-
-              <p className="long-bio-desc">
-                A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
-
-                Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.
-
-                Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk.
-
-                2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatóján. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
-
-                A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
-              </p>
-
-            </div>
           </div>
         </section>
 

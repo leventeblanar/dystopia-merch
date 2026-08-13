@@ -941,10 +941,18 @@
 
 
 .mini-cart-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   width: 100%;
   min-height: 46px;
+
   border-radius: 13px;
 
+  color: rgba(255, 255, 255, 0.86);
+
+  text-decoration: none;
   text-transform: uppercase;
 
   font-family: inherit;

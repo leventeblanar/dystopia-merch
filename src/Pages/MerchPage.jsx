@@ -339,12 +339,12 @@ function MerchPage() {
                 </strong>
               </div>
 
-              <button
+              <Link
                 className="mini-cart-link"
-                type="button"
+                to="/cart"
               >
                 Kosárhoz
-              </button>
+              </Link>
             </>
           )}
         </div>
