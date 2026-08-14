@@ -486,7 +486,18 @@ async function attachVariantsAndImages<T extends { id: number }>(
         SELECT id, product_id, size, stock, sku
         FROM product_variants
         WHERE product_id = ?
-        ORDER BY id
+        ORDER BY
+          CASE UPPER(size)
+            WHEN 'XS' THEN 1
+            WHEN 'S' THEN 2
+            WHEN 'M' THEN 3
+            WHEN 'L' THEN 4
+            WHEN 'XL' THEN 5
+            WHEN 'XXL' THEN 6
+            WHEN 'XXXL' THEN 7
+            ELSE 8
+          END,
+          id
         `,
       )
         .bind(product.id)
@@ -605,6 +616,9 @@ async function handleAdminRequest(
     /^\/api\/admin\/products\/(\d+)\/variants$/,
   );
   const variantIdMatch = path.match(/^\/api\/admin\/variants\/(\d+)$/);
+  const variantAdjustMatch = path.match(
+    /^\/api\/admin\/variants\/(\d+)\/adjust-stock$/,
+  );
   const imagesCollectionMatch = path.match(
     /^\/api\/admin\/products\/(\d+)\/images$/,
   );
@@ -779,6 +793,31 @@ async function handleAdminRequest(
 
       const result = await env.DB.prepare("DELETE FROM product_variants WHERE id = ?")
         .bind(variantId)
+        .run();
+
+      if (result.meta.changes === 0) {
+        return Response.json({ error: "A méret nem található." }, { status: 404 });
+      }
+
+      return Response.json({ success: true });
+    }
+
+    if (variantAdjustMatch && request.method === "POST") {
+      const variantId = Number(variantAdjustMatch[1]);
+      const body = await request.json().catch(() => null);
+      const delta = (body as Record<string, unknown> | null)?.delta;
+
+      if (!Number.isInteger(delta)) {
+        return Response.json(
+          { error: "Hiányzó vagy érvénytelen adatok." },
+          { status: 400 },
+        );
+      }
+
+      const result = await env.DB.prepare(
+        "UPDATE product_variants SET stock = MAX(stock + ?, 0) WHERE id = ?",
+      )
+        .bind(delta as number, variantId)
         .run();
 
       if (result.meta.changes === 0) {

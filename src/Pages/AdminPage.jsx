@@ -140,6 +140,7 @@ function ProductForm({ initialValue, submitLabel, onSubmit, onCancel }) {
 function VariantEditor({ productId, variants, onChanged }) {
   const [form, setForm] = useState({ size: "", stock: "", sku: "" });
   const [error, setError] = useState(null);
+  const [adjustDrafts, setAdjustDrafts] = useState({});
 
   const handleAdd = async (event) => {
     event.preventDefault();
@@ -183,6 +184,28 @@ function VariantEditor({ productId, variants, onChanged }) {
     }
   };
 
+  const handleAdjustStock = async (variant) => {
+    const delta = Number(adjustDrafts[variant.id]);
+
+    if (!Number.isInteger(delta) || delta === 0) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/variants/${variant.id}/adjust-stock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ delta }),
+      });
+
+      await parseJsonResponse(response);
+      setAdjustDrafts((current) => ({ ...current, [variant.id]: "" }));
+      onChanged();
+    } catch (adjustError) {
+      setError(adjustError.message);
+    }
+  };
+
   const handleDelete = async (variant) => {
     try {
       const response = await fetch(`/api/admin/variants/${variant.id}`, {
@@ -215,14 +238,38 @@ function VariantEditor({ productId, variants, onChanged }) {
             <tr key={variant.id}>
               <td>{variant.size}</td>
               <td>
-                <input
-                  type="number"
-                  min="0"
-                  defaultValue={variant.stock}
-                  onBlur={(event) =>
-                    handleStockChange(variant, event.target.value)
-                  }
-                />
+                <div className="admin-stock-cell">
+                  <input
+                    type="number"
+                    min="0"
+                    defaultValue={variant.stock}
+                    onBlur={(event) =>
+                      handleStockChange(variant, event.target.value)
+                    }
+                  />
+
+                  <div className="admin-stock-adjust">
+                    <input
+                      type="number"
+                      placeholder="+db"
+                      value={adjustDrafts[variant.id] ?? ""}
+                      onChange={(event) =>
+                        setAdjustDrafts((current) => ({
+                          ...current,
+                          [variant.id]: event.target.value,
+                        }))
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="admin-button-add"
+                      onClick={() => handleAdjustStock(variant)}
+                    >
+                      Hozzáad
+                    </button>
+                  </div>
+                </div>
               </td>
               <td>{variant.sku ?? "—"}</td>
               <td>
@@ -508,9 +555,16 @@ function ProductsTab() {
     <div className="admin-tab">
       <div className="admin-tab-header">
         <h2>Termékek</h2>
-        <button type="button" onClick={() => setCreating((current) => !current)}>
-          {creating ? "Mégse" : "Új termék"}
-        </button>
+
+        <div className="admin-tab-header-actions">
+          <button type="button" onClick={reload}>
+            Frissítés
+          </button>
+
+          <button type="button" onClick={() => setCreating((current) => !current)}>
+            {creating ? "Mégse" : "Új termék"}
+          </button>
+        </div>
       </div>
 
       {creating && (

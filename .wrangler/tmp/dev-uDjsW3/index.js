@@ -19425,7 +19425,18 @@ async function attachVariantsAndImages(env, products) {
         SELECT id, product_id, size, stock, sku
         FROM product_variants
         WHERE product_id = ?
-        ORDER BY id
+        ORDER BY
+          CASE UPPER(size)
+            WHEN 'XS' THEN 1
+            WHEN 'S' THEN 2
+            WHEN 'M' THEN 3
+            WHEN 'L' THEN 4
+            WHEN 'XL' THEN 5
+            WHEN 'XXL' THEN 6
+            WHEN 'XXXL' THEN 7
+            ELSE 8
+          END,
+          id
         `
       ).bind(product.id).all();
       const imagesResult = await env.DB.prepare(
@@ -19503,6 +19514,9 @@ async function handleAdminRequest(request, env, url) {
     /^\/api\/admin\/products\/(\d+)\/variants$/
   );
   const variantIdMatch = path.match(/^\/api\/admin\/variants\/(\d+)$/);
+  const variantAdjustMatch = path.match(
+    /^\/api\/admin\/variants\/(\d+)\/adjust-stock$/
+  );
   const imagesCollectionMatch = path.match(
     /^\/api\/admin\/products\/(\d+)\/images$/
   );
@@ -19631,6 +19645,24 @@ async function handleAdminRequest(request, env, url) {
     if (variantIdMatch && request.method === "DELETE") {
       const variantId = Number(variantIdMatch[1]);
       const result = await env.DB.prepare("DELETE FROM product_variants WHERE id = ?").bind(variantId).run();
+      if (result.meta.changes === 0) {
+        return Response.json({ error: "A m\xE9ret nem tal\xE1lhat\xF3." }, { status: 404 });
+      }
+      return Response.json({ success: true });
+    }
+    if (variantAdjustMatch && request.method === "POST") {
+      const variantId = Number(variantAdjustMatch[1]);
+      const body = await request.json().catch(() => null);
+      const delta = body?.delta;
+      if (!Number.isInteger(delta)) {
+        return Response.json(
+          { error: "Hi\xE1nyz\xF3 vagy \xE9rv\xE9nytelen adatok." },
+          { status: 400 }
+        );
+      }
+      const result = await env.DB.prepare(
+        "UPDATE product_variants SET stock = MAX(stock + ?, 0) WHERE id = ?"
+      ).bind(delta, variantId).run();
       if (result.meta.changes === 0) {
         return Response.json({ error: "A m\xE9ret nem tal\xE1lhat\xF3." }, { status: 404 });
       }

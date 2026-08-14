@@ -155,6 +155,36 @@
   cursor: pointer;
 }
 
+.admin-button-add {
+  background: transparent;
+  border: 1px solid #3ddc84;
+  color: #3ddc84;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-tab-header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-stock-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-stock-adjust {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.admin-stock-adjust input {
+  width: 56px;
+}
+
 .admin-product-card {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
