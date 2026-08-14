@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
 
+import cartHeaderBackground from "../assets/dystopia_background_2.jpg";
+
 import "./CartPage.css";
 
 
@@ -41,7 +43,12 @@ function CartPage() {
   return (
     <main className="cart-page">
 
-      <header className="cart-header">
+      <header
+        className="cart-header"
+        style={{
+          "--page-hero-image": `url(${cartHeaderBackground})`,
+        }}
+      >
         <Link
           className="cart-back"
           to="/merch"

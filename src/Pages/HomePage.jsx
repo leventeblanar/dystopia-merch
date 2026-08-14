@@ -4,15 +4,22 @@ import "./HomePage.css";
 
 import dystopiaLogo from "../assets/dystopia-logo.png";
 import dystopiaNameLogo from "../assets/dystopia_logo_name.png";
-import background1 from "../assets/dystopia_background_1.jpg";
-import background2 from "../assets/dystopia_background_2.jpg";
-import background3 from "../assets/dystopia_background_3.jpg";
 import groupPhoto from "../assets/DYSTOPIA_group_foto.jpg";
+import dystopiaSchematic from "../assets/dystopia_schematic.png";
+import backgroundVideo1 from "../assets/nemlatszik_1.mp4";
+import backgroundVideo2 from "../assets/nemlatszik_2.mp4";
+import backgroundVideo3 from "../assets/amivel_1.mp4";
+import backgroundVideo4 from "../assets/amivel_2.mp4";
+import backgroundVideo5 from "../assets/mester_1.mp4";
+import backgroundVideo6 from "../assets/mester_2.mp4";
 
-const backgroundImages = [
-  background1,
-  background2,
-  background3,
+const backgroundVideos = [
+  backgroundVideo5,
+  backgroundVideo1,
+  backgroundVideo3,
+  backgroundVideo2,
+  backgroundVideo4,
+  backgroundVideo6,
 ];
 
 const musicVideos = [
@@ -194,18 +201,8 @@ function PressKitIcon({ icon }) {
   }
 }
 
-const driftDirections = ["left", "right", "top", "bottom"];
 const HOME_INTRO_SESSION_KEY = "dystopia-home-intro-seen";
 
-const getRandomDirection = (currentDirection) => {
-  const availableDirections = driftDirections.filter(
-    (direction) => direction !== currentDirection
-  );
-
-  return availableDirections[
-    Math.floor(Math.random() * availableDirections.length)
-  ];
-};
 
 function HomePage() {
   const [phase, setPhase] = useState(() => {
@@ -219,8 +216,6 @@ function HomePage() {
     return "intro";
   });
   const [menuOpen, setMenuOpen] = useState(false);
-  const [backgroundIndex, setBackgroundIndex] = useState(0);
-  const [backgroundDirection, setBackgroundDirection] = useState("left");
   const [headerVisible, setHeaderVisible] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState(musicVideos[0].id);
   const [musicPlayerHeight, setMusicPlayerHeight] = useState(null);
@@ -239,6 +234,9 @@ function HomePage() {
   const bioSectionRef = useRef(null);
   const musicSectionRef = useRef(null);
   const contactSectionRef = useRef(null);
+
+  const [backgroundIndex, setBackgroundIndex] = useState(0);
+  const [backgroundVideoLoaded, setBackgroundVideoLoaded] = useState(false);
 
   useEffect(() => {
     if (phase !== "intro") {
@@ -382,26 +380,6 @@ function HomePage() {
 
     return () => {
       clearTimeout(merchVisibilityTimer);
-    };
-  }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "main") {
-      return;
-    }
-
-    const backgroundTimer = setInterval(() => {
-      setBackgroundDirection((currentDirection) => {
-        return getRandomDirection(currentDirection);
-      });
-
-      setBackgroundIndex((currentIndex) => {
-        return (currentIndex + 1) % backgroundImages.length;
-      });
-    }, 10000);
-
-    return () => {
-      clearInterval(backgroundTimer);
     };
   }, [phase]);
 
@@ -565,6 +543,11 @@ function HomePage() {
     setMerchDismissed(true);
   };
 
+  const advanceBackgroundVideo = () => {
+    setBackgroundVideoLoaded(false);
+    setBackgroundIndex((currentIndex) => (currentIndex + 1) % backgroundVideos.length);
+  };
+
   const activeVideo = musicVideos.find((video) => {
     return video.id === activeVideoId;
   }) || musicVideos[0];
@@ -670,17 +653,20 @@ function HomePage() {
 
         <section className="home">
           <div className="background-slider" aria-hidden="true">
-            {backgroundImages.map((image, index) => (
-              <div
-                key={image}
-                className={`background-slide ${
-                  index === backgroundIndex
-                    ? "background-slide--active"
-                    : ""
-                } background-slide--${backgroundDirection}`}
-                style={{ backgroundImage: `url(${image})` }}
-              />
-            ))}
+            <video
+              key={backgroundVideos[backgroundIndex]}
+              className={`background-video ${
+                backgroundVideoLoaded ? "background-video--loaded" : ""
+              }`}
+              src={backgroundVideos[backgroundIndex]}
+              autoPlay
+              muted
+              playsInline
+              preload="auto"
+              onLoadedData={() => setBackgroundVideoLoaded(true)}
+              onEnded={advanceBackgroundVideo}
+              onError={advanceBackgroundVideo}
+            />
           </div>
 
           <div className="home-overlay" />
@@ -1013,6 +999,16 @@ function HomePage() {
                 </div>
               </article>
             </div>
+          </div>
+
+          <div className="contact-outro" aria-hidden="true">
+            <img
+              className="contact-outro-image"
+              src={dystopiaSchematic}
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </section>
         </>

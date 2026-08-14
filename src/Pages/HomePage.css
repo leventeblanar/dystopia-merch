@@ -216,70 +216,36 @@
   background: #000;
 }
 
-.background-slide {
+.background-video {
   position: absolute;
-  inset: -4%;
+  inset: 0;
 
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
 
   opacity: 0;
 
   filter:
-    blur(22px)
-    brightness(0.52);
+    blur(20px)
+    brightness(0.7);
 
-  transform:
-    scale(1.16)
-    translate3d(0, 0, 0);
+  transform: scale(1.05);
 
-  transition: opacity 2.8s ease;
+  transition: opacity 1.4s ease;
 
-  will-change:
-    opacity,
-    transform,
-    filter;
+  will-change: opacity, filter;
 }
 
-.background-slide--active {
+.background-video--loaded {
   opacity: 1;
 
   animation:
     backgroundReveal 850ms
     cubic-bezier(0.22, 1, 0.36, 1)
-    forwards,
-    backgroundPan 10s
-    cubic-bezier(0.22, 1, 0.36, 1)
     forwards;
-}
-
-.background-slide--left {
-  --drift-start-x: -4%;
-  --drift-start-y: 0%;
-  --drift-end-x: 1.2%;
-  --drift-end-y: -0.8%;
-}
-
-.background-slide--right {
-  --drift-start-x: 4%;
-  --drift-start-y: 0%;
-  --drift-end-x: -1.2%;
-  --drift-end-y: 0.8%;
-}
-
-.background-slide--top {
-  --drift-start-x: 0%;
-  --drift-start-y: -3.5%;
-  --drift-end-x: 1%;
-  --drift-end-y: 1%;
-}
-
-.background-slide--bottom {
-  --drift-start-x: 0%;
-  --drift-start-y: 3.5%;
-  --drift-end-x: -1%;
-  --drift-end-y: -1%;
 }
 
 .home-overlay {
@@ -1769,6 +1735,77 @@ span.merch-showcase-dot--active {
   gap: 14px;
 }
 
+.contact-outro {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  pointer-events: none;
+}
+
+.contact-outro::before {
+  content: "";
+
+  display: block;
+  flex-shrink: 0;
+
+  width: 100%;
+  height: clamp(90px, 12vw, 200px);
+}
+
+.contact-outro::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 clamp(90px, 12vw, 200px),
+    transparent calc(clamp(90px, 12vw, 200px) + clamp(24px, 3.2vw, 55px))
+  );
+}
+
+.contact-outro-image {
+  display: block;
+
+  width: 100%;
+  max-width: 1800px;
+  aspect-ratio: 4.55;
+
+  object-fit: cover;
+  object-position: top center;
+
+  opacity: 0.65;
+
+  filter: brightness(0.88) contrast(0.9);
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 10%,
+    #000 90%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 10%,
+    #000 90%,
+    transparent
+  );
+}
+
 /* -------------------- */
 /* SECTION TRANSITIONS  */
 /* -------------------- */
@@ -2557,33 +2594,19 @@ span.merch-showcase-dot--active {
   0% {
     filter:
       blur(20px)
-      brightness(0.48);
+      brightness(0.7);
   }
 
   30% {
     filter:
       blur(4px)
-      brightness(0.62);
+      brightness(0.85);
   }
 
   100% {
     filter:
       blur(0)
-      brightness(0.68);
-  }
-}
-
-@keyframes backgroundPan {
-  0% {
-    transform:
-      scale(1.16)
-      translate3d(var(--drift-start-x), var(--drift-start-y), 0);
-  }
-
-  100% {
-    transform:
-      scale(1.05)
-      translate3d(var(--drift-end-x), var(--drift-end-y), 0);
+      brightness(0.95);
   }
 }
 
@@ -2597,8 +2620,8 @@ span.merch-showcase-dot--active {
     max-width: 440px;
   }
 
-  .background-slide {
-    background-position: 58% center;
+  .background-video {
+    object-position: 58% center;
   }
 
   .home-overlay {

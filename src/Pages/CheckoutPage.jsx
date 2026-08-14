@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
 
+import checkoutHeaderBackground from "../assets/dystopia_background_3.jpg";
+
+import "./CheckoutPage.css";
+
 import "./CheckoutPage.css";
 
 
@@ -108,7 +112,12 @@ function CheckoutPage() {
   return (
     <main className="checkout-page">
 
-      <header className="checkout-header">
+      <header
+        className="checkout-header"
+        style={{
+          "--page-hero-image": `url(${checkoutHeaderBackground})`,
+        }}
+      >
         <Link
           className="checkout-back"
           to="/cart"

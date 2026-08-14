@@ -252,7 +252,7 @@
     serif;
 
   font-size:
-    clamp(3.5rem, 7vw, 6rem);
+    clamp(3rem, 6vw, 5rem);
 
   font-weight:
     700;
@@ -262,6 +262,66 @@
 
   text-transform:
     uppercase;
+}
+
+
+.cart-header {
+  position: relative;
+  isolation: isolate;
+
+  width: 100%;
+  max-width: 1180px;
+
+  margin: 0 auto;
+
+  padding:
+    42px
+    0
+    54px;
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.cart-header::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+
+  z-index: 0;
+
+  width: 100vw;
+
+  transform: translateX(-50%);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.88) 0%,
+      rgba(0, 0, 0, 0.5) 48%,
+      rgba(0, 0, 0, 0.78) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.28) 58%,
+      #080808 100%
+    ),
+    var(--page-hero-image)
+      center 42% / cover
+      no-repeat;
+
+  pointer-events: none;
+}
+
+
+.cart-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 

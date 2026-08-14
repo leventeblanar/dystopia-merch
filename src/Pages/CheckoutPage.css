@@ -48,6 +48,9 @@
 /* -------------------- */
 
 .checkout-header {
+  position: relative;
+  isolation: isolate;
+
   width: 100%;
   max-width: 1180px;
 
@@ -60,6 +63,47 @@
 
   border-bottom:
     1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.checkout-header::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+
+  z-index: 0;
+
+  width: 100vw;
+
+  transform: translateX(-50%);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.88) 0%,
+      rgba(0, 0, 0, 0.5) 48%,
+      rgba(0, 0, 0, 0.78) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.28) 58%,
+      #080808 100%
+    ),
+    var(--page-hero-image)
+      center 44% / cover
+      no-repeat;
+
+  pointer-events: none;
+}
+
+
+.checkout-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 

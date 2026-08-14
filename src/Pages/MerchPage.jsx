@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 
 import dystopiaLogo from "../assets/dystopia-logo.png";
+import merchHeaderBackground from "../assets/dystopia_background_1.jpg";
 
 import "./MerchPage.css";
 
@@ -212,6 +213,8 @@ function MerchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [headerVisible, setHeaderVisible] = useState(true);
+
 
 
   useEffect(() => {
@@ -220,6 +223,57 @@ function MerchPage() {
       left: 0,
       behavior: "auto",
     });
+  }, []);
+
+  useEffect(() => {
+    const hasCoarsePointer = () => {
+      return window.matchMedia("(pointer: coarse)").matches;
+    };
+
+    const updateHeaderVisibility = () => {
+      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+        setHeaderVisible(true);
+        return;
+      }
+
+      setHeaderVisible(window.scrollY < 48);
+    };
+
+    const handleMouseMove = (event) => {
+      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+        setHeaderVisible(true);
+        return;
+      }
+
+      setHeaderVisible(event.clientY <= 110 || window.scrollY < 48);
+    };
+
+    const handleScroll = () => {
+      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+        setHeaderVisible(true);
+        return;
+      }
+
+      setHeaderVisible((currentVisible) => {
+        if (window.scrollY < 48) {
+          return true;
+        }
+
+        return currentVisible;
+      });
+    };
+
+    updateHeaderVisibility();
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", updateHeaderVisibility);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateHeaderVisibility);
+    };
   }, []);
 
   useEffect(() => {
@@ -255,7 +309,14 @@ function MerchPage() {
 
   return (
   <main className="merch-page">
-    <header className="merch-site-header">
+    <header
+      className={`merch-site-header ${
+        headerVisible || cartOpen
+          ? "merch-site-header--visible"
+          : "merch-site-header--hidden"
+      }`}
+      onMouseEnter={() => setHeaderVisible(true)}
+    >
       <Link
         className="merch-brand"
         to="/"
@@ -353,7 +414,12 @@ function MerchPage() {
     </div>
     </header>
 
-    <section className="merch-intro">
+    <section
+      className="merch-intro"
+      style={{
+        "--page-hero-image": `url(${merchHeaderBackground})`,
+      }}
+    >
       <p className="merch-eyebrow">
         Official Dystopia merchandise
       </p>
