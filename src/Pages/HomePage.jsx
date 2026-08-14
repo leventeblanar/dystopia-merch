@@ -203,6 +203,32 @@ function PressKitIcon({ icon }) {
 
 const HOME_INTRO_SESSION_KEY = "dystopia-home-intro-seen";
 
+function rafThrottle(callback) {
+  let frameId = null;
+  let lastArgs = [];
+
+  const throttled = (...args) => {
+    lastArgs = args;
+
+    if (frameId !== null) {
+      return;
+    }
+
+    frameId = requestAnimationFrame(() => {
+      frameId = null;
+      callback(...lastArgs);
+    });
+  };
+
+  throttled.cancel = () => {
+    if (frameId !== null) {
+      cancelAnimationFrame(frameId);
+      frameId = null;
+    }
+  };
+
+  return throttled;
+}
 
 function HomePage() {
   const [phase, setPhase] = useState(() => {
@@ -237,6 +263,7 @@ function HomePage() {
 
   const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [backgroundVideoLoaded, setBackgroundVideoLoaded] = useState(false);
+  const [backgroundVideoSettled, setBackgroundVideoSettled] = useState(false);
 
   useEffect(() => {
     if (phase !== "intro") {
@@ -305,24 +332,28 @@ function HomePage() {
       setBrandVisible(bioTop <= 120);
     };
 
+    const throttledUpdateBrandVisibility = rafThrottle(updateBrandVisibility);
+
     updateBrandVisibility();
 
-    window.addEventListener("scroll", updateBrandVisibility, {
+    window.addEventListener("scroll", throttledUpdateBrandVisibility, {
       passive: true,
     });
 
-    window.addEventListener("resize", updateBrandVisibility);
+    window.addEventListener("resize", throttledUpdateBrandVisibility);
 
     return () => {
       window.removeEventListener(
         "scroll",
-        updateBrandVisibility,
+        throttledUpdateBrandVisibility,
       );
 
       window.removeEventListener(
         "resize",
-        updateBrandVisibility,
+        throttledUpdateBrandVisibility,
       );
+
+      throttledUpdateBrandVisibility.cancel();
     };
   }, [phase]);
 
@@ -388,12 +419,21 @@ function HomePage() {
       return;
     }
 
-    const hasCoarsePointer = () => {
-      return window.matchMedia("(pointer: coarse)").matches;
+    const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+    let isCoarsePointer = coarsePointerQuery.matches;
+
+    const handleCoarsePointerChange = (event) => {
+      isCoarsePointer = event.matches;
     };
 
+    if (coarsePointerQuery.addEventListener) {
+      coarsePointerQuery.addEventListener("change", handleCoarsePointerChange);
+    } else {
+      coarsePointerQuery.addListener(handleCoarsePointerChange);
+    }
+
     const updateHeaderVisibility = () => {
-      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+      if (window.innerWidth <= 720 || isCoarsePointer) {
         setHeaderVisible(true);
         return;
       }
@@ -401,17 +441,17 @@ function HomePage() {
       setHeaderVisible(window.scrollY < 48);
     };
 
-    const handleMouseMove = (event) => {
-      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+    const handleMouseMove = rafThrottle((event) => {
+      if (window.innerWidth <= 720 || isCoarsePointer) {
         setHeaderVisible(true);
         return;
       }
 
       setHeaderVisible(event.clientY <= 110 || window.scrollY < 48);
-    };
+    });
 
-    const handleScroll = () => {
-      if (window.innerWidth <= 720 || hasCoarsePointer()) {
+    const handleScroll = rafThrottle(() => {
+      if (window.innerWidth <= 720 || isCoarsePointer) {
         setHeaderVisible(true);
         return;
       }
@@ -423,7 +463,7 @@ function HomePage() {
 
         return currentVisible;
       });
-    };
+    });
 
     updateHeaderVisibility();
 
@@ -432,9 +472,17 @@ function HomePage() {
     window.addEventListener("resize", updateHeaderVisibility);
 
     return () => {
+      if (coarsePointerQuery.removeEventListener) {
+        coarsePointerQuery.removeEventListener("change", handleCoarsePointerChange);
+      } else {
+        coarsePointerQuery.removeListener(handleCoarsePointerChange);
+      }
+
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", updateHeaderVisibility);
+      handleMouseMove.cancel();
+      handleScroll.cancel();
     };
   }, [phase]);
 
@@ -449,6 +497,7 @@ function HomePage() {
 
     const sectionRefs = [bioSectionRef, musicSectionRef, contactSectionRef];
     const spots = sectionRefs.map(() => ({ x: 50, y: 50 }));
+    const visibleSections = new Set();
 
     const pointer = {
       x: window.innerWidth / 2,
@@ -462,10 +511,14 @@ function HomePage() {
 
     window.addEventListener("mousemove", handleMouseMove);
 
-    let frameId;
+    let frameId = null;
 
     const animateSpots = () => {
       sectionRefs.forEach((sectionRef, index) => {
+        if (!visibleSections.has(index)) {
+          return;
+        }
+
         const element = sectionRef.current;
 
         if (!element) {
@@ -488,11 +541,59 @@ function HomePage() {
       frameId = requestAnimationFrame(animateSpots);
     };
 
-    frameId = requestAnimationFrame(animateSpots);
+    const startLoop = () => {
+      if (frameId === null) {
+        frameId = requestAnimationFrame(animateSpots);
+      }
+    };
+
+    const stopLoop = () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+        frameId = null;
+      }
+    };
+
+    // A spotlight-effekt csak akkor fut, ha a bio/zene/kapcsolat szekciók
+    // közül legalább egy látszik — így nem terheli a CPU-t a háttérben,
+    // amíg a felhasználó máshol van az oldalon.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const index = sectionRefs.findIndex(
+            (sectionRef) => sectionRef.current === entry.target,
+          );
+
+          if (index === -1) {
+            return;
+          }
+
+          if (entry.isIntersecting) {
+            visibleSections.add(index);
+          } else {
+            visibleSections.delete(index);
+          }
+        });
+
+        if (visibleSections.size > 0) {
+          startLoop();
+        } else {
+          stopLoop();
+        }
+      },
+      { threshold: 0.01 },
+    );
+
+    sectionRefs.forEach((sectionRef) => {
+      if (sectionRef.current) {
+        observer.observe(sectionRef.current);
+      }
+    });
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(frameId);
+      observer.disconnect();
+      stopLoop();
     };
   }, [phase]);
 
@@ -545,6 +646,7 @@ function HomePage() {
 
   const advanceBackgroundVideo = () => {
     setBackgroundVideoLoaded(false);
+    setBackgroundVideoSettled(false);
     setBackgroundIndex((currentIndex) => (currentIndex + 1) % backgroundVideos.length);
   };
 
@@ -657,6 +759,8 @@ function HomePage() {
               key={backgroundVideos[backgroundIndex]}
               className={`background-video ${
                 backgroundVideoLoaded ? "background-video--loaded" : ""
+              } ${
+                backgroundVideoSettled ? "background-video--settled" : ""
               }`}
               src={backgroundVideos[backgroundIndex]}
               autoPlay
@@ -664,6 +768,11 @@ function HomePage() {
               playsInline
               preload="auto"
               onLoadedData={() => setBackgroundVideoLoaded(true)}
+              onAnimationEnd={(event) => {
+                if (event.animationName === "backgroundReveal") {
+                  setBackgroundVideoSettled(true);
+                }
+              }}
               onEnded={advanceBackgroundVideo}
               onError={advanceBackgroundVideo}
             />
@@ -687,94 +796,94 @@ function HomePage() {
             </p>
           </div>
 
-          {merchSlides.length > 0 && !merchDismissed && (
-            <aside
-              className={`merch-showcase ${
-                merchWidgetVisible
-                  ? "merch-showcase--visible"
-                  : ""
-              }`}
-              aria-label="Elérhető merch"
-            >
-              <button
-                type="button"
-                className="merch-showcase-close"
-                aria-label="Bezárás"
-                onClick={dismissMerchShowcase}
-              >
-                ×
-              </button>
-
-              <div className="merch-showcase-copy">
-                <p className="merch-showcase-kicker">
-                  Official merch
-                </p>
-
-                <h2>
-                  Támogasd a zenekart.
-                  <span>Viseld a Dystopiát!</span>
-                </h2>
-              </div>
-
-              <Link
-                className="merch-showcase-card"
-                to="/merch"
-                onClick={openMerch}
-              >
-                <div className="merch-showcase-frame">
-                  {merchSlides.map((slide, index) => (
-                    <div
-                      key={slide.id}
-                      className={`merch-showcase-slide ${
-                        index === merchSlideIndex
-                          ? "merch-showcase-slide--active"
-                          : ""
-                      }`}
-                      style={{
-                        backgroundImage: `url(${slide.image})`,
-                      }}
-                    />
-                  ))}
-
-                  <div className="merch-showcase-edge-blur" />
-
-                  <div className="merch-showcase-title">
-                    <span>
-                      {merchSlides[merchSlideIndex]?.name}
-                    </span>
-                  </div>
-                </div>
-
-                {merchSlides.length > 1 && (
-                  <div
-                    className="merch-showcase-dots"
-                    aria-hidden="true"
-                  >
-                    {merchSlides.map((slide, index) => (
-                      <span
-                        key={slide.id}
-                        className={
-                          index === merchSlideIndex
-                            ? "merch-showcase-dot--active"
-                            : ""
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <span className="merch-showcase-cta">
-                  Merch megtekintése
-                  <span aria-hidden="true">→</span>
-                </span>
-              </Link>
-            </aside>
-          )}
-
           <div className="scroll-indicator" aria-hidden="true">
             <span />
           </div>
         </section>
+
+        {merchSlides.length > 0 && !merchDismissed && (
+          <aside
+            className={`merch-showcase ${
+              merchWidgetVisible
+                ? "merch-showcase--visible"
+                : ""
+            }`}
+            aria-label="Elérhető merch"
+          >
+            <button
+              type="button"
+              className="merch-showcase-close"
+              aria-label="Bezárás"
+              onClick={dismissMerchShowcase}
+            >
+              ×
+            </button>
+
+            <div className="merch-showcase-copy">
+              <p className="merch-showcase-kicker">
+                Official merch
+              </p>
+
+              <h2>
+                Támogasd a zenekart.
+                <span>Viseld a Dystopiát!</span>
+              </h2>
+            </div>
+
+            <Link
+              className="merch-showcase-card"
+              to="/merch"
+              onClick={openMerch}
+            >
+              <div className="merch-showcase-frame">
+                {merchSlides.map((slide, index) => (
+                  <div
+                    key={slide.id}
+                    className={`merch-showcase-slide ${
+                      index === merchSlideIndex
+                        ? "merch-showcase-slide--active"
+                        : ""
+                    }`}
+                    style={{
+                      backgroundImage: `url(${slide.image})`,
+                    }}
+                  />
+                ))}
+
+                <div className="merch-showcase-edge-blur" />
+
+                <div className="merch-showcase-title">
+                  <span>
+                    {merchSlides[merchSlideIndex]?.name}
+                  </span>
+                </div>
+              </div>
+
+              {merchSlides.length > 1 && (
+                <div
+                  className="merch-showcase-dots"
+                  aria-hidden="true"
+                >
+                  {merchSlides.map((slide, index) => (
+                    <span
+                      key={slide.id}
+                      className={
+                        index === merchSlideIndex
+                          ? "merch-showcase-dot--active"
+                          : ""
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+
+              <span className="merch-showcase-cta">
+                Merch megtekintése
+                <span aria-hidden="true">→</span>
+              </span>
+            </Link>
+          </aside>
+        )}
 
         <section
           id="bio"
