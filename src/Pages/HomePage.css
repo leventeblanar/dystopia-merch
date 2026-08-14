@@ -535,7 +535,7 @@
 .merch-showcase {
   position: absolute;
 
-  top: 20%;
+  top: 20vh;
   right: clamp(5vw, 8vw, 10vw);
   z-index: 5;
 
