@@ -7,7 +7,7 @@ interface __BaseEnv_Env {
 	ASSETS: Fetcher;
 	CF_ACCESS_TEAM_DOMAIN: "https://aged-term-6a8f.cloudflareaccess.com";
 	CF_ACCESS_AUD: "6a6491c2e68a071524804c6f2f3b071ebade549a6c7ad064998aa01f0cd96f90";
-	ADMIN_ALLOWED_EMAILS: "blanar.levente@gmail.com,dystopiahungary@gmail.com";
+	ADMIN_ALLOWED_EMAILS: "blanar.levente@gmail.com";
 	STRIPE_SECRET_KEY: string;
 	STRIPE_WEBHOOK_SECRET: string;
 	RESEND_API_KEY: string;

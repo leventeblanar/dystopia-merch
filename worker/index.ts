@@ -942,6 +942,64 @@ async function handleAdminRequest(
   }
 }
 
+async function serveRangeRequest(
+  request: Request,
+  env: Env,
+  rangeHeader: string,
+): Promise<Response> {
+  const fullResponse = await env.ASSETS.fetch(
+    new Request(request.url, { method: "GET" }),
+  );
+
+  if (!fullResponse.ok) {
+    return fullResponse;
+  }
+
+  const buffer = await fullResponse.arrayBuffer();
+  const totalSize = buffer.byteLength;
+
+  const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+  if (!match) {
+    return new Response(buffer, {
+      status: 200,
+      headers: fullResponse.headers,
+    });
+  }
+
+  const [, startStr, endStr] = match;
+  let start = startStr ? parseInt(startStr, 10) : 0;
+  let end = endStr ? parseInt(endStr, 10) : totalSize - 1;
+
+  if (!startStr && endStr) {
+    // suffix range, e.g. bytes=-500
+    start = totalSize - parseInt(endStr, 10);
+    end = totalSize - 1;
+  }
+
+  start = Math.max(0, start);
+  end = Math.min(totalSize - 1, end);
+
+  if (start > end || start >= totalSize) {
+    return new Response(null, {
+      status: 416,
+      headers: {
+        "Content-Range": `bytes */${totalSize}`,
+      },
+    });
+  }
+
+  const slice = buffer.slice(start, end + 1);
+  const headers = new Headers(fullResponse.headers);
+  headers.set("Content-Range", `bytes ${start}-${end}/${totalSize}`);
+  headers.set("Content-Length", String(slice.byteLength));
+  headers.set("Accept-Ranges", "bytes");
+
+  return new Response(slice, {
+    status: 206,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -1023,6 +1081,11 @@ export default {
           status: 404,
         },
       );
+    }
+
+    const rangeHeader = request.headers.get("Range");
+    if (rangeHeader && /\.(mp4|webm|mov)$/i.test(url.pathname)) {
+      return serveRangeRequest(request, env, rangeHeader);
     }
 
     return env.ASSETS.fetch(request);
