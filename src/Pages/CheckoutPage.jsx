@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
 
+import { SHIPPING_FEE_HUF } from "../../shared/constants";
+
 import checkoutHeaderBackground from "../assets/dystopia_background_3.jpg";
 
 import "./CheckoutPage.css";
@@ -47,6 +49,8 @@ function CheckoutPage() {
     (total, item) => total + Number(item.price) * item.quantity,
     0
   );
+
+  const grandTotal = cartTotal + SHIPPING_FEE_HUF;
 
 
   const handleChange = (field) => (event) => {
@@ -282,11 +286,19 @@ function CheckoutPage() {
             ))}
           </div>
 
+          <div className="checkout-summary-shipping">
+            <span>Szállítás</span>
+
+            <span>
+              {SHIPPING_FEE_HUF.toLocaleString("hu-HU")} Ft
+            </span>
+          </div>
+
           <div className="checkout-summary-total">
             <span>Összesen</span>
 
             <strong>
-              {cartTotal.toLocaleString("hu-HU")} Ft
+              {grandTotal.toLocaleString("hu-HU")} Ft
             </strong>
           </div>
 

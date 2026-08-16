@@ -1,6 +1,19 @@
 import Stripe from "stripe";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
+import { SHIPPING_FEE_HUF } from "../shared/constants";
+
+// Stripe pays out HUF/TWD as zero-decimal currencies, but still requires
+// amounts sent to the Checkout/Payment APIs in the currency's subunit —
+// https://stripe.com/docs/currencies#special-cases
+const STRIPE_SUBUNIT_CHARGE_CURRENCIES = new Set(["huf", "twd"]);
+
+function toStripeUnitAmount(amount: number, currency: string): number {
+  return STRIPE_SUBUNIT_CHARGE_CURRENCIES.has(currency.toLowerCase())
+    ? Math.round(amount * 100)
+    : amount;
+}
+
 type ProductRow = {
   id: number;
   name: string;
@@ -182,45 +195,234 @@ function validateCheckoutBody(body: unknown): body is CheckoutRequestBody {
   );
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatHuf(amount: number, currency: string): string {
+  return `${amount.toLocaleString("hu-HU")} ${currency}`;
+}
+
+async function sendViaResend(
+  env: Env,
+  params: { to: string | string[]; subject: string; html: string },
+): Promise<void> {
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: env.RESEND_FROM_EMAIL,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
+    }),
+  });
+}
+
 async function sendOrderNotificationEmail(
   env: Env,
   order: OrderRow,
   items: OrderItemRow[],
 ): Promise<void> {
   try {
+    const itemsSubtotal = items.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0,
+    );
+
     const itemsHtml = items
       .map(
         (item) =>
-          `<li>${item.product_name} (${item.variant_size}) &times; ${item.quantity} &mdash; ${(
-            item.unit_price * item.quantity
-          ).toLocaleString("hu-HU")} ${order.currency}</li>`,
+          `<li>${escapeHtml(item.product_name)} (${escapeHtml(item.variant_size)}) &times; ${item.quantity} &mdash; ${formatHuf(
+            item.unit_price * item.quantity,
+            order.currency,
+          )}</li>`,
       )
       .join("");
 
     const html = `
       <h2>Új rendelés #${order.id}</h2>
-      <p><strong>${order.customer_name}</strong><br>${order.customer_email} · ${order.customer_phone}</p>
-      <p>${order.shipping_postal_code} ${order.shipping_city}, ${order.shipping_street_address}</p>
-      ${order.shipping_note ? `<p>Megjegyzés: ${order.shipping_note}</p>` : ""}
+      <p><strong>${escapeHtml(order.customer_name)}</strong><br>${escapeHtml(order.customer_email)} · ${escapeHtml(order.customer_phone)}</p>
+      <p>${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}, ${escapeHtml(order.shipping_street_address)}</p>
+      ${order.shipping_note ? `<p>Megjegyzés: ${escapeHtml(order.shipping_note)}</p>` : ""}
       <ul>${itemsHtml}</ul>
-      <p>Összesen: <strong>${order.total_amount.toLocaleString("hu-HU")} ${order.currency}</strong></p>
+      <p>Részösszeg: ${formatHuf(itemsSubtotal, order.currency)}<br>Szállítás: ${formatHuf(SHIPPING_FEE_HUF, order.currency)}</p>
+      <p>Összesen: <strong>${formatHuf(order.total_amount, order.currency)}</strong></p>
     `;
 
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
-        to: env.ORDER_NOTIFICATION_EMAIL,
-        subject: `Új rendelés #${order.id} — ${order.total_amount.toLocaleString("hu-HU")} ${order.currency}`,
-        html,
-      }),
+    const recipients = env.ORDER_NOTIFICATION_EMAIL.split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+
+    await sendViaResend(env, {
+      to: recipients,
+      subject: `Új rendelés #${order.id} — ${formatHuf(order.total_amount, order.currency)}`,
+      html,
     });
   } catch (error) {
     console.error("Failed to send order notification email", error);
+  }
+}
+
+async function sendOrderConfirmationEmail(
+  env: Env,
+  order: OrderRow,
+  items: OrderItemRow[],
+): Promise<void> {
+  try {
+    const itemsSubtotal = items.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0,
+    );
+
+    const itemRows = items
+      .map(
+        (item) => `
+          <tr>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
+              ${escapeHtml(item.product_name)}
+              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
+                Méret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
+              </span>
+            </td>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
+              ${formatHuf(item.unit_price * item.quantity, order.currency)}
+            </td>
+          </tr>`,
+      )
+      .join("");
+
+    const addressLines = [
+      `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
+      escapeHtml(order.shipping_street_address),
+    ];
+
+    const html = `
+<!doctype html>
+<html lang="hu">
+  <body style="margin: 0; padding: 0; background-color: #000000; font-family: Georgia, 'Times New Roman', serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%; background-color: #0c0b0e; border-radius: 16px; overflow: hidden; border: 1px solid #262228;">
+
+            <tr>
+              <td style="padding: 36px 40px 24px; text-align: center; border-bottom: 1px solid #262228;">
+                <p style="margin: 0 0 6px; color: #a91c32; font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;">
+                  Official Dystopia merchandise
+                </p>
+                <h1 style="margin: 0; color: #ffffff; font-size: 26px; letter-spacing: 0.14em; text-transform: uppercase;">
+                  DYSTOPIA
+                </h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Köszönjük a rendelésed!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A fizetés sikeresen megtörtént, a rendelésed feldolgozás alatt áll. Az alábbiakban
+                  összefoglaltuk, mit rendeltél és hova szállítjuk.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 20px 40px 0;">
+                <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
+                  Rendelés &mdash; #${order.id}
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 12px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  ${itemRows}
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 18px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px;">Részösszeg</td>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px; text-align: right;">
+                      ${formatHuf(itemsSubtotal, order.currency)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px;">Szállítás</td>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px; text-align: right;">
+                      ${formatHuf(SHIPPING_FEE_HUF, order.currency)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 16px 0 0; border-top: 1px solid #262228; color: #ffffff; font-size: 16px; font-weight: bold;">
+                      Összesen
+                    </td>
+                    <td style="padding: 16px 0 0; border-top: 1px solid #262228; color: #ffffff; font-size: 16px; font-weight: bold; text-align: right;">
+                      ${formatHuf(order.total_amount, order.currency)}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #141216; border-radius: 12px;">
+                  <tr>
+                    <td style="padding: 20px 24px;">
+                      <p style="margin: 0 0 10px; color: #a91c32; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;">
+                        Szállítási cím
+                      </p>
+                      <p style="margin: 0; color: #f5f5f5; font-size: 14px; line-height: 1.6;">
+                        ${escapeHtml(order.customer_name)}<br>
+                        ${addressLines.join("<br>")}
+                      </p>
+                      ${
+                        order.shipping_note
+                          ? `<p style="margin: 12px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">Megjegyzés: ${escapeHtml(order.shipping_note)}</p>`
+                          : ""
+                      }
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 40px; text-align: center;">
+                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
+                  Ha kérdésed van a rendeléseddel kapcsolatban, válaszolj erre az emailre.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `Rendelésed visszaigazolva — #${order.id}`,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send order confirmation email", error);
   }
 }
 
@@ -299,10 +501,11 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
       });
     }
 
-    const totalAmount = lineItems.reduce(
+    const itemsSubtotal = lineItems.reduce(
       (sum, lineItem) => sum + lineItem.unitPrice * lineItem.quantity,
       0,
     );
+    const totalAmount = itemsSubtotal + SHIPPING_FEE_HUF;
     const currency = lineItems[0].currency;
 
     const orderInsert = await env.DB.prepare(
@@ -354,16 +557,31 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: customer.email,
-      line_items: lineItems.map((lineItem) => ({
-        quantity: lineItem.quantity,
-        price_data: {
-          currency: lineItem.currency.toLowerCase(),
-          unit_amount: lineItem.unitPrice,
-          product_data: {
-            name: `${lineItem.productName} (${lineItem.size})`,
+      line_items: [
+        ...lineItems.map((lineItem) => ({
+          quantity: lineItem.quantity,
+          price_data: {
+            currency: lineItem.currency.toLowerCase(),
+            unit_amount: toStripeUnitAmount(
+              lineItem.unitPrice,
+              lineItem.currency,
+            ),
+            product_data: {
+              name: `${lineItem.productName} (${lineItem.size})`,
+            },
+          },
+        })),
+        {
+          quantity: 1,
+          price_data: {
+            currency: currency.toLowerCase(),
+            unit_amount: toStripeUnitAmount(SHIPPING_FEE_HUF, currency),
+            product_data: {
+              name: "Szállítási költség",
+            },
           },
         },
-      })),
+      ],
       metadata: { orderId: String(orderId) },
       success_url: `${env.PUBLIC_BASE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.PUBLIC_BASE_URL}/order/cancelled`,
@@ -452,11 +670,10 @@ async function handleStripeWebhook(
 
         await env.DB.batch(statements);
 
-        await sendOrderNotificationEmail(
-          env,
-          { ...order, status: "paid" },
-          items,
-        );
+        await Promise.all([
+          sendOrderNotificationEmail(env, { ...order, status: "paid" }, items),
+          sendOrderConfirmationEmail(env, { ...order, status: "paid" }, items),
+        ]);
       }
     }
   } else if (event.type === "checkout.session.expired") {

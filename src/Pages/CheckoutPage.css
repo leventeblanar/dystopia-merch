@@ -509,6 +509,22 @@
 }
 
 
+.checkout-summary-shipping {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding-top: 16px;
+
+  color: rgba(255, 255, 255, 0.6);
+
+  font-size: 0.76rem;
+}
+
+
 .checkout-summary-total {
   display: flex;
 
@@ -518,6 +534,9 @@
   gap: 20px;
 
   padding: 24px 0;
+  margin-top: 8px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 
   color: rgba(255, 255, 255, 0.68);
 }
