@@ -19125,7 +19125,15 @@ function createRemoteJWKSet(url, options) {
 }
 __name(createRemoteJWKSet, "createRemoteJWKSet");
 
+// shared/constants.ts
+var SHIPPING_FEE_HUF = 2500;
+
 // worker/index.ts
+var STRIPE_SUBUNIT_CHARGE_CURRENCIES = /* @__PURE__ */ new Set(["huf", "twd"]);
+function toStripeUnitAmount(amount, currency) {
+  return STRIPE_SUBUNIT_CHARGE_CURRENCIES.has(currency.toLowerCase()) ? Math.round(amount * 100) : amount;
+}
+__name(toStripeUnitAmount, "toStripeUnitAmount");
 function getStripeClient(env) {
   return new stripe_esm_worker_default(env.STRIPE_SECRET_KEY, {
     httpClient: stripe_esm_worker_default.createFetchHttpClient()
@@ -19194,37 +19202,202 @@ function validateCheckoutBody(body) {
   );
 }
 __name(validateCheckoutBody, "validateCheckoutBody");
+function escapeHtml(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+__name(escapeHtml, "escapeHtml");
+function formatHuf(amount, currency) {
+  return `${amount.toLocaleString("hu-HU")} ${currency}`;
+}
+__name(formatHuf, "formatHuf");
+async function sendViaResend(env, params) {
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: env.RESEND_FROM_EMAIL,
+      to: params.to,
+      subject: params.subject,
+      html: params.html
+    })
+  });
+}
+__name(sendViaResend, "sendViaResend");
 async function sendOrderNotificationEmail(env, order, items) {
   try {
+    const itemsSubtotal = items.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0
+    );
     const itemsHtml = items.map(
-      (item) => `<li>${item.product_name} (${item.variant_size}) &times; ${item.quantity} &mdash; ${(item.unit_price * item.quantity).toLocaleString("hu-HU")} ${order.currency}</li>`
+      (item) => `<li>${escapeHtml(item.product_name)} (${escapeHtml(item.variant_size)}) &times; ${item.quantity} &mdash; ${formatHuf(
+        item.unit_price * item.quantity,
+        order.currency
+      )}</li>`
     ).join("");
     const html = `
       <h2>\xDAj rendel\xE9s #${order.id}</h2>
-      <p><strong>${order.customer_name}</strong><br>${order.customer_email} \xB7 ${order.customer_phone}</p>
-      <p>${order.shipping_postal_code} ${order.shipping_city}, ${order.shipping_street_address}</p>
-      ${order.shipping_note ? `<p>Megjegyz\xE9s: ${order.shipping_note}</p>` : ""}
+      <p><strong>${escapeHtml(order.customer_name)}</strong><br>${escapeHtml(order.customer_email)} \xB7 ${escapeHtml(order.customer_phone)}</p>
+      <p>${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}, ${escapeHtml(order.shipping_street_address)}</p>
+      ${order.shipping_note ? `<p>Megjegyz\xE9s: ${escapeHtml(order.shipping_note)}</p>` : ""}
       <ul>${itemsHtml}</ul>
-      <p>\xD6sszesen: <strong>${order.total_amount.toLocaleString("hu-HU")} ${order.currency}</strong></p>
+      <p>R\xE9sz\xF6sszeg: ${formatHuf(itemsSubtotal, order.currency)}<br>Sz\xE1ll\xEDt\xE1s: ${formatHuf(SHIPPING_FEE_HUF, order.currency)}</p>
+      <p>\xD6sszesen: <strong>${formatHuf(order.total_amount, order.currency)}</strong></p>
     `;
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        from: env.RESEND_FROM_EMAIL,
-        to: env.ORDER_NOTIFICATION_EMAIL,
-        subject: `\xDAj rendel\xE9s #${order.id} \u2014 ${order.total_amount.toLocaleString("hu-HU")} ${order.currency}`,
-        html
-      })
+    const recipients = env.ORDER_NOTIFICATION_EMAIL.split(",").map((entry) => entry.trim()).filter((entry) => entry.length > 0);
+    await sendViaResend(env, {
+      to: recipients,
+      subject: `\xDAj rendel\xE9s #${order.id} \u2014 ${formatHuf(order.total_amount, order.currency)}`,
+      html
     });
   } catch (error) {
     console.error("Failed to send order notification email", error);
   }
 }
 __name(sendOrderNotificationEmail, "sendOrderNotificationEmail");
+async function sendOrderConfirmationEmail(env, order, items) {
+  try {
+    const itemsSubtotal = items.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0
+    );
+    const itemRows = items.map(
+      (item) => `
+          <tr>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
+              ${escapeHtml(item.product_name)}
+              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
+                M\xE9ret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
+              </span>
+            </td>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
+              ${formatHuf(item.unit_price * item.quantity, order.currency)}
+            </td>
+          </tr>`
+    ).join("");
+    const addressLines = [
+      `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
+      escapeHtml(order.shipping_street_address)
+    ];
+    const html = `
+<!doctype html>
+<html lang="hu">
+  <body style="margin: 0; padding: 0; background-color: #000000; font-family: Georgia, 'Times New Roman', serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #000000; padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width: 600px; max-width: 100%; background-color: #0c0b0e; border-radius: 16px; overflow: hidden; border: 1px solid #262228;">
+
+            <tr>
+              <td style="padding: 36px 40px 24px; text-align: center; border-bottom: 1px solid #262228;">
+                <p style="margin: 0 0 6px; color: #a91c32; font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase;">
+                  Official Dystopia merchandise
+                </p>
+                <h1 style="margin: 0; color: #ffffff; font-size: 26px; letter-spacing: 0.14em; text-transform: uppercase;">
+                  DYSTOPIA
+                </h1>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">K\xF6sz\xF6nj\xFCk a rendel\xE9sed!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A fizet\xE9s sikeresen megt\xF6rt\xE9nt, a rendel\xE9sed feldolgoz\xE1s alatt \xE1ll. Az al\xE1bbiakban
+                  \xF6sszefoglaltuk, mit rendelt\xE9l \xE9s hova sz\xE1ll\xEDtjuk.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 20px 40px 0;">
+                <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
+                  Rendel\xE9s &mdash; #${order.id}
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 12px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  ${itemRows}
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 18px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px;">R\xE9sz\xF6sszeg</td>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px; text-align: right;">
+                      ${formatHuf(itemsSubtotal, order.currency)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px;">Sz\xE1ll\xEDt\xE1s</td>
+                    <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px; text-align: right;">
+                      ${formatHuf(SHIPPING_FEE_HUF, order.currency)}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 16px 0 0; border-top: 1px solid #262228; color: #ffffff; font-size: 16px; font-weight: bold;">
+                      \xD6sszesen
+                    </td>
+                    <td style="padding: 16px 0 0; border-top: 1px solid #262228; color: #ffffff; font-size: 16px; font-weight: bold; text-align: right;">
+                      ${formatHuf(order.total_amount, order.currency)}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 0;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #141216; border-radius: 12px;">
+                  <tr>
+                    <td style="padding: 20px 24px;">
+                      <p style="margin: 0 0 10px; color: #a91c32; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;">
+                        Sz\xE1ll\xEDt\xE1si c\xEDm
+                      </p>
+                      <p style="margin: 0; color: #f5f5f5; font-size: 14px; line-height: 1.6;">
+                        ${escapeHtml(order.customer_name)}<br>
+                        ${addressLines.join("<br>")}
+                      </p>
+                      ${order.shipping_note ? `<p style="margin: 12px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">Megjegyz\xE9s: ${escapeHtml(order.shipping_note)}</p>` : ""}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 32px 40px 40px; text-align: center;">
+                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
+                  Ha k\xE9rd\xE9sed van a rendel\xE9seddel kapcsolatban, v\xE1laszolj erre az emailre.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `Rendel\xE9sed visszaigazolva \u2014 #${order.id}`,
+      html
+    });
+  } catch (error) {
+    console.error("Failed to send order confirmation email", error);
+  }
+}
+__name(sendOrderConfirmationEmail, "sendOrderConfirmationEmail");
 async function handleCheckout(request, env) {
   let body;
   try {
@@ -19282,10 +19455,11 @@ async function handleCheckout(request, env) {
         currency: row.currency
       });
     }
-    const totalAmount = lineItems.reduce(
+    const itemsSubtotal = lineItems.reduce(
       (sum, lineItem) => sum + lineItem.unitPrice * lineItem.quantity,
       0
     );
+    const totalAmount = itemsSubtotal + SHIPPING_FEE_HUF;
     const currency = lineItems[0].currency;
     const orderInsert = await env.DB.prepare(
       `
@@ -19330,16 +19504,31 @@ async function handleCheckout(request, env) {
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: customer.email,
-      line_items: lineItems.map((lineItem) => ({
-        quantity: lineItem.quantity,
-        price_data: {
-          currency: lineItem.currency.toLowerCase(),
-          unit_amount: lineItem.unitPrice,
-          product_data: {
-            name: `${lineItem.productName} (${lineItem.size})`
+      line_items: [
+        ...lineItems.map((lineItem) => ({
+          quantity: lineItem.quantity,
+          price_data: {
+            currency: lineItem.currency.toLowerCase(),
+            unit_amount: toStripeUnitAmount(
+              lineItem.unitPrice,
+              lineItem.currency
+            ),
+            product_data: {
+              name: `${lineItem.productName} (${lineItem.size})`
+            }
+          }
+        })),
+        {
+          quantity: 1,
+          price_data: {
+            currency: currency.toLowerCase(),
+            unit_amount: toStripeUnitAmount(SHIPPING_FEE_HUF, currency),
+            product_data: {
+              name: "Sz\xE1ll\xEDt\xE1si k\xF6lts\xE9g"
+            }
           }
         }
-      })),
+      ],
       metadata: { orderId: String(orderId) },
       success_url: `${env.PUBLIC_BASE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.PUBLIC_BASE_URL}/order/cancelled`
@@ -19398,11 +19587,10 @@ async function handleStripeWebhook(request, env) {
           )
         ];
         await env.DB.batch(statements);
-        await sendOrderNotificationEmail(
-          env,
-          { ...order, status: "paid" },
-          items
-        );
+        await Promise.all([
+          sendOrderNotificationEmail(env, { ...order, status: "paid" }, items),
+          sendOrderConfirmationEmail(env, { ...order, status: "paid" }, items)
+        ]);
       }
     }
   } else if (event.type === "checkout.session.expired") {
@@ -19748,6 +19936,50 @@ async function handleAdminRequest(request, env, url) {
   }
 }
 __name(handleAdminRequest, "handleAdminRequest");
+async function serveRangeRequest(request, env, rangeHeader) {
+  const fullResponse = await env.ASSETS.fetch(
+    new Request(request.url, { method: "GET" })
+  );
+  if (!fullResponse.ok) {
+    return fullResponse;
+  }
+  const buffer = await fullResponse.arrayBuffer();
+  const totalSize = buffer.byteLength;
+  const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+  if (!match) {
+    return new Response(buffer, {
+      status: 200,
+      headers: fullResponse.headers
+    });
+  }
+  const [, startStr, endStr] = match;
+  let start = startStr ? parseInt(startStr, 10) : 0;
+  let end = endStr ? parseInt(endStr, 10) : totalSize - 1;
+  if (!startStr && endStr) {
+    start = totalSize - parseInt(endStr, 10);
+    end = totalSize - 1;
+  }
+  start = Math.max(0, start);
+  end = Math.min(totalSize - 1, end);
+  if (start > end || start >= totalSize) {
+    return new Response(null, {
+      status: 416,
+      headers: {
+        "Content-Range": `bytes */${totalSize}`
+      }
+    });
+  }
+  const slice = buffer.slice(start, end + 1);
+  const headers = new Headers(fullResponse.headers);
+  headers.set("Content-Range", `bytes ${start}-${end}/${totalSize}`);
+  headers.set("Content-Length", String(slice.byteLength));
+  headers.set("Accept-Ranges", "bytes");
+  return new Response(slice, {
+    status: 206,
+    headers
+  });
+}
+__name(serveRangeRequest, "serveRangeRequest");
 var worker_default = {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -19808,6 +20040,10 @@ var worker_default = {
         }
       );
     }
+    const rangeHeader = request.headers.get("Range");
+    if (rangeHeader && /\.(mp4|webm|mov)$/i.test(url.pathname)) {
+      return serveRangeRequest(request, env, rangeHeader);
+    }
     return env.ASSETS.fetch(request);
   }
 };
@@ -19859,7 +20095,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-Zvdcqz/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-C20yKJ/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -19891,7 +20127,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-Zvdcqz/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-C20yKJ/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

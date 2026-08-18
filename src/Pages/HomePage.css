@@ -313,7 +313,7 @@
 
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
 
   width: 100%;
 
@@ -344,10 +344,6 @@
 }
 
 .brand {
-  position: absolute;
-  top: 50%;
-  left: 5vw;
-
   display: block;
 
   width: 135px;
@@ -357,7 +353,7 @@
   opacity: 0;
   visibility: hidden;
 
-  transform: translateY(calc(-50% - 8px));
+  transform: translateY(-8px);
 
   pointer-events: none;
 
@@ -372,7 +368,7 @@
   opacity: 1;
   visibility: visible;
 
-  transform: translateY(-50%);
+  transform: translateY(0);
 
   pointer-events: auto;
 }
@@ -2687,9 +2683,8 @@ span.merch-showcase-dot--active {
   }
 
   .brand {
+    position: relative;
     z-index: 22;
-
-    left: calc(22px + env(safe-area-inset-left));
 
     width: 95px;
   }
