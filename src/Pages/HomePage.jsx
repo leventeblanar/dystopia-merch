@@ -264,6 +264,27 @@ function HomePage() {
   const [backgroundIndex, setBackgroundIndex] = useState(0);
   const [backgroundVideoLoaded, setBackgroundVideoLoaded] = useState(false);
   const [backgroundVideoSettled, setBackgroundVideoSettled] = useState(false);
+  const [backgroundVideoEnabled, setBackgroundVideoEnabled] = useState(false);
+
+  useEffect(() => {
+    // A háttérvideó (több MB-os mp4) csak akkor kerül a DOM-ba, amikor a
+    // böngésző már ráért a kritikus induló kéréseket (font, CSS, JS, merch
+    // API + kép) elindítani — így nem versenyeznek egymással sávszélességért
+    // az első pillanatokban. A .background-slider feketén marad addig is,
+    // amíg a videó nem jelenik meg, ez a szándékolt alapállapot.
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(
+        () => setBackgroundVideoEnabled(true),
+        { timeout: 1500 },
+      );
+
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(() => setBackgroundVideoEnabled(true), 400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   useEffect(() => {
     if (phase !== "intro") {
@@ -497,6 +518,12 @@ function HomePage() {
 
     const sectionRefs = [bioSectionRef, musicSectionRef, contactSectionRef];
     const spots = sectionRefs.map(() => ({ x: 50, y: 50 }));
+    // A rect-eket csak scroll/resize-kor mérjük újra (lásd lejjebb), sosem az
+    // animációs loopban — a folyamatos getBoundingClientRect() hívás minden
+    // frame-ben "forced reflow"-t okozott, mert a böngészőnek a megelőző
+    // stílusírás miatt mindig újra kellett futtatnia a layoutot a lekérdezés
+    // előtt (ez volt Firefoxon az akadás fő forrása).
+    const rects = sectionRefs.map(() => null);
     const visibleSections = new Set();
 
     const pointer = {
@@ -511,6 +538,19 @@ function HomePage() {
 
     window.addEventListener("mousemove", handleMouseMove);
 
+    const measureRects = () => {
+      sectionRefs.forEach((sectionRef, index) => {
+        if (sectionRef.current) {
+          rects[index] = sectionRef.current.getBoundingClientRect();
+        }
+      });
+    };
+
+    const throttledMeasureRects = rafThrottle(measureRects);
+
+    window.addEventListener("scroll", throttledMeasureRects, { passive: true });
+    window.addEventListener("resize", throttledMeasureRects);
+
     let frameId = null;
 
     const animateSpots = () => {
@@ -520,12 +560,12 @@ function HomePage() {
         }
 
         const element = sectionRef.current;
+        const rect = rects[index];
 
-        if (!element) {
+        if (!element || !rect) {
           return;
         }
 
-        const rect = element.getBoundingClientRect();
         const spot = spots[index];
 
         const targetX = ((pointer.x - rect.left) / rect.width) * 100;
@@ -570,6 +610,7 @@ function HomePage() {
 
           if (entry.isIntersecting) {
             visibleSections.add(index);
+            rects[index] = entry.boundingClientRect;
           } else {
             visibleSections.delete(index);
           }
@@ -592,6 +633,9 @@ function HomePage() {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("scroll", throttledMeasureRects);
+      window.removeEventListener("resize", throttledMeasureRects);
+      throttledMeasureRects.cancel();
       observer.disconnect();
       stopLoop();
     };
@@ -656,35 +700,17 @@ function HomePage() {
 
   return (
     <main className="app">
-      {phase !== "main" ? (
-        <section
-          className={`intro ${
-            phase === "leaving" ? "intro--leaving" : ""
-          }`}
-        >
-          <div className="intro-smoke" aria-hidden="true">
-            <span className="intro-smoke-layer intro-smoke-layer--one" />
-            <span className="intro-smoke-layer intro-smoke-layer--two" />
-            <span className="intro-smoke-layer intro-smoke-layer--three" />
-          </div>
-
-          <div className="logo-container">
-            <img
-              className="dystopia-logo logo-glitch"
-              src={dystopiaLogo}
-              alt=""
-              aria-hidden="true"
-            />
-
-            <img
-              className="dystopia-logo logo-main"
-              src={dystopiaLogo}
-              alt="Dystopia"
-            />
-          </div>
-        </section>
-      ) : (
-        <>
+      {/*
+        A tartalom mindig a DOM-ban van, a bevezető animáció csak egy opak
+        overlay felette (lásd .intro, z-index 100). Így a valós LCP-elemek
+        (hero, merch kártya) attól függetlenül tölthetnek/renderelhetnek,
+        hogy az intro animáció még játszik — nem kell rá várniuk.
+      */}
+      <div
+        className="site-content"
+        inert={phase !== "main" ? true : undefined}
+        aria-hidden={phase !== "main"}
+      >
           <div id="top" className="top-anchor" aria-hidden="true" />
 
           <header
@@ -755,27 +781,30 @@ function HomePage() {
 
         <section className="home">
           <div className="background-slider" aria-hidden="true">
-            <video
-              key={backgroundVideos[backgroundIndex]}
-              className={`background-video ${
-                backgroundVideoLoaded ? "background-video--loaded" : ""
-              } ${
-                backgroundVideoSettled ? "background-video--settled" : ""
-              }`}
-              src={backgroundVideos[backgroundIndex]}
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              onLoadedData={() => setBackgroundVideoLoaded(true)}
-              onAnimationEnd={(event) => {
-                if (event.animationName === "backgroundReveal") {
-                  setBackgroundVideoSettled(true);
-                }
-              }}
-              onEnded={advanceBackgroundVideo}
-              onError={advanceBackgroundVideo}
-            />
+            {backgroundVideoEnabled && (
+              <video
+                key={backgroundVideos[backgroundIndex]}
+                className={`background-video ${
+                  backgroundVideoLoaded ? "background-video--loaded" : ""
+                } ${
+                  backgroundVideoSettled ? "background-video--settled" : ""
+                }`}
+                src={backgroundVideos[backgroundIndex]}
+                autoPlay
+                muted
+                playsInline
+                preload="auto"
+                fetchPriority="low"
+                onLoadedData={() => setBackgroundVideoLoaded(true)}
+                onAnimationEnd={(event) => {
+                  if (event.animationName === "backgroundReveal") {
+                    setBackgroundVideoSettled(true);
+                  }
+                }}
+                onEnded={advanceBackgroundVideo}
+                onError={advanceBackgroundVideo}
+              />
+            )}
           </div>
 
           <div className="home-overlay" />
@@ -1120,7 +1149,35 @@ function HomePage() {
             />
           </div>
         </section>
-        </>
+      </div>
+
+      {phase !== "main" && (
+        <section
+          className={`intro ${
+            phase === "leaving" ? "intro--leaving" : ""
+          }`}
+        >
+          <div className="intro-smoke" aria-hidden="true">
+            <span className="intro-smoke-layer intro-smoke-layer--one" />
+            <span className="intro-smoke-layer intro-smoke-layer--two" />
+            <span className="intro-smoke-layer intro-smoke-layer--three" />
+          </div>
+
+          <div className="logo-container">
+            <img
+              className="dystopia-logo logo-glitch"
+              src={dystopiaLogo}
+              alt=""
+              aria-hidden="true"
+            />
+
+            <img
+              className="dystopia-logo logo-main"
+              src={dystopiaLogo}
+              alt="Dystopia"
+            />
+          </div>
+        </section>
       )}
 
     <div
