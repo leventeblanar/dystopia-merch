@@ -66,6 +66,8 @@ type OrderRow = {
   total_amount: number;
   currency: string;
   status: string;
+  processing: number;
+  shipped: number;
   stripe_checkout_session_id: string | null;
   stripe_payment_intent_id: string | null;
 };
@@ -272,40 +274,8 @@ async function sendOrderNotificationEmail(
   }
 }
 
-async function sendOrderConfirmationEmail(
-  env: Env,
-  order: OrderRow,
-  items: OrderItemRow[],
-): Promise<void> {
-  try {
-    const itemsSubtotal = items.reduce(
-      (sum, item) => sum + item.unit_price * item.quantity,
-      0,
-    );
-
-    const itemRows = items
-      .map(
-        (item) => `
-          <tr>
-            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
-              ${escapeHtml(item.product_name)}
-              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
-                Méret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
-              </span>
-            </td>
-            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
-              ${formatHuf(item.unit_price * item.quantity, order.currency)}
-            </td>
-          </tr>`,
-      )
-      .join("");
-
-    const addressLines = [
-      `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
-      escapeHtml(order.shipping_street_address),
-    ];
-
-    const html = `
+function renderEmailShell(bodyHtml: string): string {
+  return `
 <!doctype html>
 <html lang="hu">
   <body style="margin: 0; padding: 0; background-color: #000000; font-family: Georgia, 'Times New Roman', serif;">
@@ -325,24 +295,59 @@ async function sendOrderConfirmationEmail(
               </td>
             </tr>
 
+            ${bodyHtml}
+
             <tr>
-              <td style="padding: 32px 40px 8px;">
-                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Köszönjük a rendelésed!</h2>
-                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
-                  A fizetés sikeresen megtörtént, a rendelésed feldolgozás alatt áll. Az alábbiakban
-                  összefoglaltuk, mit rendeltél és hova szállítjuk.
+              <td style="padding: 32px 40px 40px; text-align: center;">
+                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
+                  Ha kérdésed van a rendeléseddel kapcsolatban, válaszolj erre az emailre.
                 </p>
               </td>
             </tr>
 
-            <tr>
-              <td style="padding: 20px 40px 0;">
-                <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
-                  Rendelés &mdash; #${order.id}
-                </p>
-              </td>
-            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
 
+function renderOrderReferenceRow(order: OrderRow): string {
+  return `
+    <tr>
+      <td style="padding: 20px 40px 0;">
+        <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
+          Rendelés &mdash; #${order.id}
+        </p>
+      </td>
+    </tr>`;
+}
+
+function renderOrderItemsBlock(order: OrderRow, items: OrderItemRow[]): string {
+  const itemsSubtotal = items.reduce(
+    (sum, item) => sum + item.unit_price * item.quantity,
+    0,
+  );
+
+  const itemRows = items
+    .map(
+      (item) => `
+          <tr>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
+              ${escapeHtml(item.product_name)}
+              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
+                Méret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
+              </span>
+            </td>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
+              ${formatHuf(item.unit_price * item.quantity, order.currency)}
+            </td>
+          </tr>`,
+    )
+    .join("");
+
+  return `
             <tr>
               <td style="padding: 12px 40px 0;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -376,8 +381,16 @@ async function sendOrderConfirmationEmail(
                   </tr>
                 </table>
               </td>
-            </tr>
+            </tr>`;
+}
 
+function renderShippingAddressBlock(order: OrderRow): string {
+  const addressLines = [
+    `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
+    escapeHtml(order.shipping_street_address),
+  ];
+
+  return `
             <tr>
               <td style="padding: 32px 40px 0;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #141216; border-radius: 12px;">
@@ -390,6 +403,9 @@ async function sendOrderConfirmationEmail(
                         ${escapeHtml(order.customer_name)}<br>
                         ${addressLines.join("<br>")}
                       </p>
+                      <p style="margin: 10px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">
+                        ${escapeHtml(order.customer_phone)}
+                      </p>
                       ${
                         order.shipping_note
                           ? `<p style="margin: 12px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">Megjegyzés: ${escapeHtml(order.shipping_note)}</p>`
@@ -399,30 +415,104 @@ async function sendOrderConfirmationEmail(
                   </tr>
                 </table>
               </td>
-            </tr>
+            </tr>`;
+}
 
+async function sendOrderConfirmationEmail(
+  env: Env,
+  order: OrderRow,
+  items: OrderItemRow[],
+): Promise<void> {
+  try {
+    const bodyHtml = `
             <tr>
-              <td style="padding: 32px 40px 40px; text-align: center;">
-                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
-                  Ha kérdésed van a rendeléseddel kapcsolatban, válaszolj erre az emailre.
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Köszönjük a rendelésed!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A fizetés sikeresen megtörtént, a rendelésed feldolgozás alatt áll. Az alábbiakban
+                  összefoglaltuk, mit rendeltél és hova szállítjuk.
                 </p>
               </td>
             </tr>
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
 
     await sendViaResend(env, {
       to: order.customer_email,
       subject: `Rendelésed visszaigazolva — #${order.id}`,
-      html,
+      html: renderEmailShell(bodyHtml),
     });
   } catch (error) {
     console.error("Failed to send order confirmation email", error);
+  }
+}
+
+async function sendOrderProcessingEmail(
+  env: Env,
+  order: OrderRow,
+  items: OrderItemRow[],
+): Promise<void> {
+  try {
+    const bodyHtml = `
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">A rendelésed feldolgozás alatt áll</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  Jó hír: elkezdtük előkészíteni a csomagodat! Csapatunk most válogatja és
+                  csomagolja össze a lentebb részletezett tételeket, amint ezzel elkészülünk és a
+                  csomag postára/futárnak átadásra kerül, egy újabb emailben értesítünk a
+                  nyomkövetési adatokkal együtt. Az alábbiakban még egyszer összefoglaltuk a
+                  rendelésed tartalmát és a szállítási címet, kérünk, ellenőrizd, hogy minden
+                  helyes.
+                </p>
+              </td>
+            </tr>
+
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
+
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `A rendelésed feldolgozás alatt áll — #${order.id}`,
+      html: renderEmailShell(bodyHtml),
+    });
+  } catch (error) {
+    console.error("Failed to send order processing email", error);
+  }
+}
+
+async function sendOrderShippedEmail(
+  env: Env,
+  order: OrderRow,
+  items: OrderItemRow[],
+): Promise<void> {
+  try {
+    const bodyHtml = `
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Feladtuk a rendelésedet!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A csomagod útnak indult &mdash; postára/futárnak átadtuk, és hamarosan megérkezik
+                  a lentebb megadott szállítási címre. Az alábbiakban még egyszer összefoglaltuk,
+                  mit tartalmaz a csomag és hova érkezik.
+                </p>
+              </td>
+            </tr>
+
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
+
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `Feladtuk a rendelésedet — #${order.id}`,
+      html: renderEmailShell(bodyHtml),
+    });
+  } catch (error) {
+    console.error("Failed to send order shipped email", error);
   }
 }
 
@@ -815,6 +905,38 @@ function isUniqueConstraintError(error: unknown): boolean {
   return error instanceof Error && error.message.includes("UNIQUE constraint failed");
 }
 
+const OPTIMIZABLE_IMAGE_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+async function optimizeProductImage(
+  env: Env,
+  file: File,
+): Promise<{ body: ReadableStream<Uint8Array> | ArrayBuffer; contentType: string }> {
+  const fallback = async () => ({
+    body: await file.arrayBuffer(),
+    contentType: file.type || "application/octet-stream",
+  });
+
+  if (!OPTIMIZABLE_IMAGE_TYPES.has(file.type)) {
+    return fallback();
+  }
+
+  try {
+    const result = await env.IMAGES.input(file.stream())
+      .transform({ width: 1600, fit: "scale-down" })
+      .output({ format: "image/webp", quality: 82 });
+
+    return { body: result.image(), contentType: "image/webp" };
+  } catch (error) {
+    console.error("Image optimization failed, storing original upload", error);
+    return fallback();
+  }
+}
+
 async function handleAdminRequest(
   request: Request,
   env: Env,
@@ -840,6 +962,7 @@ async function handleAdminRequest(
     /^\/api\/admin\/products\/(\d+)\/images$/,
   );
   const imageIdMatch = path.match(/^\/api\/admin\/images\/(\d+)$/);
+  const orderIdMatch = path.match(/^\/api\/admin\/orders\/(\d+)$/);
 
   try {
     if (path === "/api/admin/products" && request.method === "GET") {
@@ -1070,9 +1193,13 @@ async function handleAdminRequest(
           : 0;
 
       const objectKey = `products/${productId}/${crypto.randomUUID()}`;
+      const optimized = await optimizeProductImage(env, file);
 
-      await env.dystopia_merch_images.put(objectKey, await file.arrayBuffer(), {
-        httpMetadata: { contentType: file.type || "application/octet-stream" },
+      await env.dystopia_merch_images.put(objectKey, optimized.body, {
+        httpMetadata: {
+          contentType: optimized.contentType,
+          cacheControl: "public, max-age=31536000, immutable",
+        },
       });
 
       const insert = await env.DB.prepare(
@@ -1141,6 +1268,79 @@ async function handleAdminRequest(
       return Response.json(orders);
     }
 
+    if (orderIdMatch && request.method === "PATCH") {
+      const orderId = Number(orderIdMatch[1]);
+      const body = await request.json().catch(() => null);
+
+      if (!body || typeof body !== "object") {
+        return Response.json(
+          { error: "Hiányzó vagy érvénytelen adatok." },
+          { status: 400 },
+        );
+      }
+
+      const { processing, shipped } = body as Record<string, unknown>;
+
+      if (
+        (processing === undefined && shipped === undefined) ||
+        (processing !== undefined && typeof processing !== "boolean") ||
+        (shipped !== undefined && typeof shipped !== "boolean")
+      ) {
+        return Response.json(
+          { error: "Hiányzó vagy érvénytelen adatok." },
+          { status: 400 },
+        );
+      }
+
+      const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?")
+        .bind(orderId)
+        .first<OrderRow>();
+
+      if (!order) {
+        return Response.json({ error: "A rendelés nem található." }, { status: 404 });
+      }
+
+      const updates: string[] = [];
+      const values: (number)[] = [];
+
+      if (processing !== undefined) {
+        updates.push("processing = ?");
+        values.push(processing ? 1 : 0);
+      }
+
+      if (shipped !== undefined) {
+        updates.push("shipped = ?");
+        values.push(shipped ? 1 : 0);
+      }
+
+      await env.DB.prepare(
+        `UPDATE orders SET ${updates.join(", ")} WHERE id = ?`,
+      )
+        .bind(...values, orderId)
+        .run();
+
+      if (
+        (processing === true && order.processing === 0) ||
+        (shipped === true && order.shipped === 0)
+      ) {
+        const items = (
+          await env.DB.prepare("SELECT * FROM order_items WHERE order_id = ?")
+            .bind(orderId)
+            .all<OrderItemRow>()
+        ).results;
+
+        if (processing === true && order.processing === 0) {
+          await sendOrderProcessingEmail(env, order, items);
+        }
+
+        if (shipped === true && order.shipped === 0) {
+          await sendOrderShippedEmail(env, order, items);
+        }
+      }
+
+      return Response.json({ success: true });
+    }
+
     return Response.json({ error: "Not found" }, { status: 404 });
   } catch (error) {
     console.error("Admin request failed", error);
@@ -1159,28 +1359,64 @@ async function handleAdminRequest(
   }
 }
 
+function concatChunks(chunks: Uint8Array[], totalLength: number): Uint8Array {
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+
 async function serveRangeRequest(
   request: Request,
   env: Env,
   rangeHeader: string,
 ): Promise<Response> {
-  const fullResponse = await env.ASSETS.fetch(
-    new Request(request.url, { method: "GET" }),
-  );
+  const url = new URL(request.url);
+  const cacheKey = new Request(url.toString(), { method: "GET" });
+  const cache = caches.default;
 
-  if (!fullResponse.ok) {
+  let fullResponse = await cache.match(cacheKey);
+
+  if (!fullResponse) {
+    const originResponse = await env.ASSETS.fetch(
+      new Request(url.toString(), { method: "GET" }),
+    );
+
+    if (!originResponse.ok) {
+      return originResponse;
+    }
+
+    const cacheHeaders = new Headers(originResponse.headers);
+    cacheHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
+
+    await cache.put(
+      cacheKey,
+      new Response(originResponse.body, { status: 200, headers: cacheHeaders }),
+    );
+
+    // Re-read from the cache rather than slicing the live stream directly:
+    // on a cold fetch, the asset origin doesn't always report a reliable
+    // Content-Length on the in-flight stream, but the cached copy (written
+    // above) always does once fully stored.
+    fullResponse = await cache.match(cacheKey);
+
+    if (!fullResponse) {
+      return env.ASSETS.fetch(request);
+    }
+  }
+
+  const totalSize = parseInt(fullResponse.headers.get("Content-Length") ?? "", 10);
+
+  if (!Number.isFinite(totalSize) || !fullResponse.body) {
     return fullResponse;
   }
 
-  const buffer = await fullResponse.arrayBuffer();
-  const totalSize = buffer.byteLength;
-
   const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
   if (!match) {
-    return new Response(buffer, {
-      status: 200,
-      headers: fullResponse.headers,
-    });
+    return fullResponse;
   }
 
   const [, startStr, endStr] = match;
@@ -1205,13 +1441,47 @@ async function serveRangeRequest(
     });
   }
 
-  const slice = buffer.slice(start, end + 1);
+  // Stream through the cached body and keep only the requested byte range in
+  // memory, instead of buffering the whole file for every range request.
+  const reader = fullResponse.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let collected = 0;
+  let position = 0;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+
+    const chunkStart = position;
+    const chunkEnd = position + value.byteLength;
+    position = chunkEnd;
+
+    if (chunkEnd <= start) continue;
+
+    if (chunkStart > end) {
+      await reader.cancel();
+      break;
+    }
+
+    const sliceStart = Math.max(0, start - chunkStart);
+    const sliceEnd = Math.min(value.byteLength, end + 1 - chunkStart);
+    const slice = value.slice(sliceStart, sliceEnd);
+    chunks.push(slice);
+    collected += slice.byteLength;
+
+    if (chunkEnd > end) {
+      await reader.cancel();
+      break;
+    }
+  }
+
+  const body = concatChunks(chunks, collected);
   const headers = new Headers(fullResponse.headers);
   headers.set("Content-Range", `bytes ${start}-${end}/${totalSize}`);
-  headers.set("Content-Length", String(slice.byteLength));
+  headers.set("Content-Length", String(body.byteLength));
   headers.set("Accept-Ranges", "bytes");
 
-  return new Response(slice, {
+  return new Response(body, {
     status: 206,
     headers,
   });
@@ -1268,6 +1538,13 @@ export default {
 
         object.writeHttpMetadata(headers);
         headers.set("etag", object.httpEtag);
+
+        if (!headers.has("Cache-Control")) {
+          // Legacy uploads stored before Cache-Control was set at upload
+          // time. The object key includes a random UUID per upload, so its
+          // content never changes — safe to cache indefinitely.
+          headers.set("Cache-Control", "public, max-age=31536000, immutable");
+        }
 
         return new Response(object.body, {
             headers,

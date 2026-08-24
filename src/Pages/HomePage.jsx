@@ -865,19 +865,27 @@ function HomePage() {
               onClick={openMerch}
             >
               <div className="merch-showcase-frame">
-                {merchSlides.map((slide, index) => (
-                  <div
-                    key={slide.id}
-                    className={`merch-showcase-slide ${
-                      index === merchSlideIndex
-                        ? "merch-showcase-slide--active"
-                        : ""
-                    }`}
-                    style={{
-                      backgroundImage: `url(${slide.image})`,
-                    }}
-                  />
-                ))}
+                {merchSlides.map((slide, index) => {
+                  const nextIndex = (merchSlideIndex + 1) % merchSlides.length;
+                  const shouldLoad =
+                    index === merchSlideIndex || index === nextIndex;
+
+                  return (
+                    <div
+                      key={slide.id}
+                      className={`merch-showcase-slide ${
+                        index === merchSlideIndex
+                          ? "merch-showcase-slide--active"
+                          : ""
+                      }`}
+                      style={
+                        shouldLoad
+                          ? { backgroundImage: `url(${slide.image})` }
+                          : undefined
+                      }
+                    />
+                  );
+                })}
 
                 <div className="merch-showcase-edge-blur" />
 

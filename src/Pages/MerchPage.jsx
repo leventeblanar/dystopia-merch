@@ -83,6 +83,8 @@ function ProductCard({ product }) {
               key={currentImage.id}
               src={currentImage.url}
               alt={currentImage.alt_text ?? product.name}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="product-image-placeholder">
@@ -371,6 +373,8 @@ function MerchPage() {
                       <img
                         src={item.image}
                         alt=""
+                        loading="lazy"
+                        decoding="async"
                       />
                     )}
 

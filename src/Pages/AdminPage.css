@@ -45,6 +45,14 @@
   border-color: #b01818 !important;
 }
 
+.admin-logout {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
 .admin-tab {
   max-width: 1100px;
   margin: 0 auto;
@@ -332,6 +340,10 @@
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.admin-order-toggle {
+  color: #000;
 }
 
 .admin-order-status {

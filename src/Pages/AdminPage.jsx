@@ -600,6 +600,29 @@ function OrdersTab() {
   const [error, setError] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  const handleToggleFulfillment = async (order, field) => {
+    const nextValue = !order[field];
+
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: nextValue }),
+      });
+      await parseJsonResponse(response);
+
+      setOrders((current) =>
+        current.map((existingOrder) =>
+          existingOrder.id === order.id
+            ? { ...existingOrder, [field]: nextValue ? 1 : 0 }
+            : existingOrder,
+        ),
+      );
+    } catch (toggleError) {
+      setError(toggleError.message);
+    }
+  };
+
   useEffect(() => {
     const loadOrders = async () => {
       try {
@@ -634,6 +657,8 @@ function OrdersTab() {
               <th>Cím</th>
               <th>Összeg</th>
               <th>Státusz</th>
+              <th>Feldolgozás alatt</th>
+              <th>Feladva</th>
               <th></th>
             </tr>
           </thead>
@@ -662,8 +687,23 @@ function OrdersTab() {
                     </span>
                   </td>
                   <td>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(order.processing)}
+                      onChange={() => handleToggleFulfillment(order, "processing")}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(order.shipped)}
+                      onChange={() => handleToggleFulfillment(order, "shipped")}
+                    />
+                  </td>
+                  <td>
                     <button
                       type="button"
+                      className="admin-order-toggle"
                       onClick={() =>
                         setExpandedOrderId((current) =>
                           current === order.id ? null : order.id,
@@ -677,7 +717,7 @@ function OrdersTab() {
 
                 {expandedOrderId === order.id && (
                   <tr key={`${order.id}-details`}>
-                    <td colSpan={6}>
+                    <td colSpan={8}>
                       <ul className="admin-order-items">
                         {order.items.map((item) => (
                           <li key={item.id}>
@@ -730,6 +770,10 @@ function AdminPage() {
             Rendelések
           </button>
         </nav>
+
+        <a className="admin-logout" href="/cdn-cgi/access/logout">
+          Kijelentkezés
+        </a>
       </header>
 
       {activeTab === "products" ? <ProductsTab /> : <OrdersTab />}

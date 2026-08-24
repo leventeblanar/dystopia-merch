@@ -112,6 +112,8 @@ function CartPage() {
                       <img
                         src={item.image}
                         alt={item.name}
+                        loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div className="cart-item-image-placeholder">

@@ -7,7 +7,7 @@
         "PUBLIC_BASE_URL": "https://dystopia-merch.blanar-levente.workers.dev",
         "CF_ACCESS_TEAM_DOMAIN": "https://aged-term-6a8f.cloudflareaccess.com",
         "CF_ACCESS_AUD": "6a6491c2e68a071524804c6f2f3b071ebade549a6c7ad064998aa01f0cd96f90",
-        "ADMIN_ALLOWED_EMAILS": "blanar.levente@gmail.com"
+        "ADMIN_ALLOWED_EMAILS": "blanar.levente@gmail.com,dystopiahungary@gmail.com"
     },
     "assets": {
     "directory": "./dist",
@@ -30,5 +30,8 @@
 			"bucket_name": "dystopia-merch-images",
 			"binding": "dystopia_merch_images"
 		}
-	]
+	],
+	"images": {
+		"binding": "IMAGES"
+	}
 }

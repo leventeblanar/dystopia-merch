@@ -19258,31 +19258,8 @@ async function sendOrderNotificationEmail(env, order, items) {
   }
 }
 __name(sendOrderNotificationEmail, "sendOrderNotificationEmail");
-async function sendOrderConfirmationEmail(env, order, items) {
-  try {
-    const itemsSubtotal = items.reduce(
-      (sum, item) => sum + item.unit_price * item.quantity,
-      0
-    );
-    const itemRows = items.map(
-      (item) => `
-          <tr>
-            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
-              ${escapeHtml(item.product_name)}
-              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
-                M\xE9ret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
-              </span>
-            </td>
-            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
-              ${formatHuf(item.unit_price * item.quantity, order.currency)}
-            </td>
-          </tr>`
-    ).join("");
-    const addressLines = [
-      `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
-      escapeHtml(order.shipping_street_address)
-    ];
-    const html = `
+function renderEmailShell(bodyHtml) {
+  return `
 <!doctype html>
 <html lang="hu">
   <body style="margin: 0; padding: 0; background-color: #000000; font-family: Georgia, 'Times New Roman', serif;">
@@ -19302,24 +19279,55 @@ async function sendOrderConfirmationEmail(env, order, items) {
               </td>
             </tr>
 
+            ${bodyHtml}
+
             <tr>
-              <td style="padding: 32px 40px 8px;">
-                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">K\xF6sz\xF6nj\xFCk a rendel\xE9sed!</h2>
-                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
-                  A fizet\xE9s sikeresen megt\xF6rt\xE9nt, a rendel\xE9sed feldolgoz\xE1s alatt \xE1ll. Az al\xE1bbiakban
-                  \xF6sszefoglaltuk, mit rendelt\xE9l \xE9s hova sz\xE1ll\xEDtjuk.
+              <td style="padding: 32px 40px 40px; text-align: center;">
+                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
+                  Ha k\xE9rd\xE9sed van a rendel\xE9seddel kapcsolatban, v\xE1laszolj erre az emailre.
                 </p>
               </td>
             </tr>
 
-            <tr>
-              <td style="padding: 20px 40px 0;">
-                <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
-                  Rendel\xE9s &mdash; #${order.id}
-                </p>
-              </td>
-            </tr>
-
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+__name(renderEmailShell, "renderEmailShell");
+function renderOrderReferenceRow(order) {
+  return `
+    <tr>
+      <td style="padding: 20px 40px 0;">
+        <p style="margin: 0; color: #8a848c; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;">
+          Rendel\xE9s &mdash; #${order.id}
+        </p>
+      </td>
+    </tr>`;
+}
+__name(renderOrderReferenceRow, "renderOrderReferenceRow");
+function renderOrderItemsBlock(order, items) {
+  const itemsSubtotal = items.reduce(
+    (sum, item) => sum + item.unit_price * item.quantity,
+    0
+  );
+  const itemRows = items.map(
+    (item) => `
+          <tr>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
+              ${escapeHtml(item.product_name)}
+              <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
+                M\xE9ret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
+              </span>
+            </td>
+            <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
+              ${formatHuf(item.unit_price * item.quantity, order.currency)}
+            </td>
+          </tr>`
+  ).join("");
+  return `
             <tr>
               <td style="padding: 12px 40px 0;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -19353,8 +19361,15 @@ async function sendOrderConfirmationEmail(env, order, items) {
                   </tr>
                 </table>
               </td>
-            </tr>
-
+            </tr>`;
+}
+__name(renderOrderItemsBlock, "renderOrderItemsBlock");
+function renderShippingAddressBlock(order) {
+  const addressLines = [
+    `${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}`,
+    escapeHtml(order.shipping_street_address)
+  ];
+  return `
             <tr>
               <td style="padding: 32px 40px 0;">
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #141216; border-radius: 12px;">
@@ -19367,37 +19382,100 @@ async function sendOrderConfirmationEmail(env, order, items) {
                         ${escapeHtml(order.customer_name)}<br>
                         ${addressLines.join("<br>")}
                       </p>
+                      <p style="margin: 10px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">
+                        ${escapeHtml(order.customer_phone)}
+                      </p>
                       ${order.shipping_note ? `<p style="margin: 12px 0 0; color: #8a848c; font-size: 13px; line-height: 1.5;">Megjegyz\xE9s: ${escapeHtml(order.shipping_note)}</p>` : ""}
                     </td>
                   </tr>
                 </table>
               </td>
-            </tr>
-
+            </tr>`;
+}
+__name(renderShippingAddressBlock, "renderShippingAddressBlock");
+async function sendOrderConfirmationEmail(env, order, items) {
+  try {
+    const bodyHtml = `
             <tr>
-              <td style="padding: 32px 40px 40px; text-align: center;">
-                <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
-                  Ha k\xE9rd\xE9sed van a rendel\xE9seddel kapcsolatban, v\xE1laszolj erre az emailre.
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">K\xF6sz\xF6nj\xFCk a rendel\xE9sed!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A fizet\xE9s sikeresen megt\xF6rt\xE9nt, a rendel\xE9sed feldolgoz\xE1s alatt \xE1ll. Az al\xE1bbiakban
+                  \xF6sszefoglaltuk, mit rendelt\xE9l \xE9s hova sz\xE1ll\xEDtjuk.
                 </p>
               </td>
             </tr>
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
     await sendViaResend(env, {
       to: order.customer_email,
       subject: `Rendel\xE9sed visszaigazolva \u2014 #${order.id}`,
-      html
+      html: renderEmailShell(bodyHtml)
     });
   } catch (error) {
     console.error("Failed to send order confirmation email", error);
   }
 }
 __name(sendOrderConfirmationEmail, "sendOrderConfirmationEmail");
+async function sendOrderProcessingEmail(env, order, items) {
+  try {
+    const bodyHtml = `
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">A rendel\xE9sed feldolgoz\xE1s alatt \xE1ll</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  J\xF3 h\xEDr: elkezdt\xFCk el\u0151k\xE9sz\xEDteni a csomagodat! Csapatunk most v\xE1logatja \xE9s
+                  csomagolja \xF6ssze a lentebb r\xE9szletezett t\xE9teleket, amint ezzel elk\xE9sz\xFCl\xFCnk \xE9s a
+                  csomag post\xE1ra/fut\xE1rnak \xE1tad\xE1sra ker\xFCl, egy \xFAjabb emailben \xE9rtes\xEDt\xFCnk a
+                  nyomk\xF6vet\xE9si adatokkal egy\xFCtt. Az al\xE1bbiakban m\xE9g egyszer \xF6sszefoglaltuk a
+                  rendel\xE9sed tartalm\xE1t \xE9s a sz\xE1ll\xEDt\xE1si c\xEDmet, k\xE9r\xFCnk, ellen\u0151rizd, hogy minden
+                  helyes.
+                </p>
+              </td>
+            </tr>
+
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `A rendel\xE9sed feldolgoz\xE1s alatt \xE1ll \u2014 #${order.id}`,
+      html: renderEmailShell(bodyHtml)
+    });
+  } catch (error) {
+    console.error("Failed to send order processing email", error);
+  }
+}
+__name(sendOrderProcessingEmail, "sendOrderProcessingEmail");
+async function sendOrderShippedEmail(env, order, items) {
+  try {
+    const bodyHtml = `
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Feladtuk a rendel\xE9sedet!</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  A csomagod \xFAtnak indult &mdash; post\xE1ra/fut\xE1rnak \xE1tadtuk, \xE9s hamarosan meg\xE9rkezik
+                  a lentebb megadott sz\xE1ll\xEDt\xE1si c\xEDmre. Az al\xE1bbiakban m\xE9g egyszer \xF6sszefoglaltuk,
+                  mit tartalmaz a csomag \xE9s hova \xE9rkezik.
+                </p>
+              </td>
+            </tr>
+
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}`;
+    await sendViaResend(env, {
+      to: order.customer_email,
+      subject: `Feladtuk a rendel\xE9sedet \u2014 #${order.id}`,
+      html: renderEmailShell(bodyHtml)
+    });
+  } catch (error) {
+    console.error("Failed to send order shipped email", error);
+  }
+}
+__name(sendOrderShippedEmail, "sendOrderShippedEmail");
 async function handleCheckout(request, env) {
   let body;
   try {
@@ -19709,6 +19787,7 @@ async function handleAdminRequest(request, env, url) {
     /^\/api\/admin\/products\/(\d+)\/images$/
   );
   const imageIdMatch = path.match(/^\/api\/admin\/images\/(\d+)$/);
+  const orderIdMatch = path.match(/^\/api\/admin\/orders\/(\d+)$/);
   try {
     if (path === "/api/admin/products" && request.method === "GET") {
       const productsResult = await env.DB.prepare(
@@ -19920,6 +19999,50 @@ async function handleAdminRequest(request, env, url) {
       );
       return Response.json(orders);
     }
+    if (orderIdMatch && request.method === "PATCH") {
+      const orderId = Number(orderIdMatch[1]);
+      const body = await request.json().catch(() => null);
+      if (!body || typeof body !== "object") {
+        return Response.json(
+          { error: "Hi\xE1nyz\xF3 vagy \xE9rv\xE9nytelen adatok." },
+          { status: 400 }
+        );
+      }
+      const { processing, shipped } = body;
+      if (processing === void 0 && shipped === void 0 || processing !== void 0 && typeof processing !== "boolean" || shipped !== void 0 && typeof shipped !== "boolean") {
+        return Response.json(
+          { error: "Hi\xE1nyz\xF3 vagy \xE9rv\xE9nytelen adatok." },
+          { status: 400 }
+        );
+      }
+      const order = await env.DB.prepare("SELECT * FROM orders WHERE id = ?").bind(orderId).first();
+      if (!order) {
+        return Response.json({ error: "A rendel\xE9s nem tal\xE1lhat\xF3." }, { status: 404 });
+      }
+      const updates = [];
+      const values = [];
+      if (processing !== void 0) {
+        updates.push("processing = ?");
+        values.push(processing ? 1 : 0);
+      }
+      if (shipped !== void 0) {
+        updates.push("shipped = ?");
+        values.push(shipped ? 1 : 0);
+      }
+      await env.DB.prepare(
+        `UPDATE orders SET ${updates.join(", ")} WHERE id = ?`
+      ).bind(...values, orderId).run();
+      if (processing === true && order.processing === 0 || shipped === true && order.shipped === 0) {
+        const items = (await env.DB.prepare("SELECT * FROM order_items WHERE order_id = ?").bind(orderId).all()).results;
+        if (processing === true && order.processing === 0) {
+          await sendOrderProcessingEmail(env, order, items);
+        }
+        if (shipped === true && order.shipped === 0) {
+          await sendOrderShippedEmail(env, order, items);
+        }
+      }
+      return Response.json({ success: true });
+    }
     return Response.json({ error: "Not found" }, { status: 404 });
   } catch (error) {
     console.error("Admin request failed", error);
@@ -19936,21 +20059,46 @@ async function handleAdminRequest(request, env, url) {
   }
 }
 __name(handleAdminRequest, "handleAdminRequest");
+function concatChunks(chunks, totalLength) {
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
+}
+__name(concatChunks, "concatChunks");
 async function serveRangeRequest(request, env, rangeHeader) {
-  const fullResponse = await env.ASSETS.fetch(
-    new Request(request.url, { method: "GET" })
-  );
-  if (!fullResponse.ok) {
+  const url = new URL(request.url);
+  const cacheKey = new Request(url.toString(), { method: "GET" });
+  const cache2 = caches.default;
+  let fullResponse = await cache2.match(cacheKey);
+  if (!fullResponse) {
+    const originResponse = await env.ASSETS.fetch(
+      new Request(url.toString(), { method: "GET" })
+    );
+    if (!originResponse.ok) {
+      return originResponse;
+    }
+    const cacheHeaders = new Headers(originResponse.headers);
+    cacheHeaders.set("Cache-Control", "public, max-age=31536000, immutable");
+    await cache2.put(
+      cacheKey,
+      new Response(originResponse.body, { status: 200, headers: cacheHeaders })
+    );
+    fullResponse = await cache2.match(cacheKey);
+    if (!fullResponse) {
+      return env.ASSETS.fetch(request);
+    }
+  }
+  const totalSize = parseInt(fullResponse.headers.get("Content-Length") ?? "", 10);
+  if (!Number.isFinite(totalSize) || !fullResponse.body) {
     return fullResponse;
   }
-  const buffer = await fullResponse.arrayBuffer();
-  const totalSize = buffer.byteLength;
   const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
   if (!match) {
-    return new Response(buffer, {
-      status: 200,
-      headers: fullResponse.headers
-    });
+    return fullResponse;
   }
   const [, startStr, endStr] = match;
   let start = startStr ? parseInt(startStr, 10) : 0;
@@ -19969,12 +20117,37 @@ async function serveRangeRequest(request, env, rangeHeader) {
       }
     });
   }
-  const slice = buffer.slice(start, end + 1);
+  const reader = fullResponse.body.getReader();
+  const chunks = [];
+  let collected = 0;
+  let position = 0;
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    const chunkStart = position;
+    const chunkEnd = position + value.byteLength;
+    position = chunkEnd;
+    if (chunkEnd <= start) continue;
+    if (chunkStart > end) {
+      await reader.cancel();
+      break;
+    }
+    const sliceStart = Math.max(0, start - chunkStart);
+    const sliceEnd = Math.min(value.byteLength, end + 1 - chunkStart);
+    const slice = value.slice(sliceStart, sliceEnd);
+    chunks.push(slice);
+    collected += slice.byteLength;
+    if (chunkEnd > end) {
+      await reader.cancel();
+      break;
+    }
+  }
+  const body = concatChunks(chunks, collected);
   const headers = new Headers(fullResponse.headers);
   headers.set("Content-Range", `bytes ${start}-${end}/${totalSize}`);
-  headers.set("Content-Length", String(slice.byteLength));
+  headers.set("Content-Length", String(body.byteLength));
   headers.set("Accept-Ranges", "bytes");
-  return new Response(slice, {
+  return new Response(body, {
     status: 206,
     headers
   });
@@ -20095,7 +20268,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-C20yKJ/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-KTGoAr/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -20127,7 +20300,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-C20yKJ/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-KTGoAr/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
