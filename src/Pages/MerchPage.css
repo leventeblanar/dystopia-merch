@@ -774,6 +774,19 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.add-to-cart-button--added,
+.add-to-cart-button--added:hover:not(:disabled) {
+  background-color: rgba(46, 125, 74, 0.85);
+  background-image: none;
+
+  color: #fff;
+
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.34),
+    0 3px 10px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .add-to-cart-button:disabled {
   background:
     rgba(20, 20, 22, 0.28);

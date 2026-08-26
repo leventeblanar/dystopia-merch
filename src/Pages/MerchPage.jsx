@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 
-import dystopiaLogo from "../assets/dystopia-logo.png";
+import dystopiaLogo from "../assets/dystopia-logo.webp";
 import merchHeaderBackground from "../assets/dystopia_background_1.jpg";
 
 import "./MerchPage.css";
@@ -13,6 +13,7 @@ function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedVariantId, setSelectedVariantId] = useState(null);
   const [quantity, setQuantity] = useState(1)
+  const [justAdded, setJustAdded] = useState(false);
 
 
   const images = product.images ?? [];
@@ -22,6 +23,18 @@ function ProductCard({ product }) {
   product.variants?.find(
     (variant) => variant.id === selectedVariantId
   ) ?? null;
+
+  useEffect(() => {
+    if (!justAdded) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setJustAdded(false);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [justAdded]);
 
   const showNextImage = () => {
     if (images.length <= 1) {
@@ -67,6 +80,7 @@ function ProductCard({ product }) {
   };
 
   addToCart(cartItem);
+  setJustAdded(true);
   };
 
   return (
@@ -147,6 +161,7 @@ function ProductCard({ product }) {
                   onClick={() => {
                     setSelectedVariantId(variant.id);
                     setQuantity(1);
+                    setJustAdded(false);
                   }}
                 >
                   {variant.size}
@@ -190,12 +205,14 @@ function ProductCard({ product }) {
         </div>
 
         <button
-          className="add-to-cart-button"
+          className={`add-to-cart-button ${
+            justAdded ? "add-to-cart-button--added" : ""
+          }`}
           type="button"
           disabled={!selectedVariant}
           onClick={handleAddToCart}
           >
-          Kosárba
+          {justAdded ? "Hozzáadtad a kosárhoz" : "Kosárba"}
         </button>
       </div>
     </article>

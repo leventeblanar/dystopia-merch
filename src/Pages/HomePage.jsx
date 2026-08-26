@@ -2,10 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./HomePage.css";
 
-import dystopiaLogo from "../assets/dystopia-logo.png";
-import dystopiaNameLogo from "../assets/dystopia_logo_name.png";
+import dystopiaLogo from "../assets/dystopia-logo.webp";
+import dystopiaNameLogo from "../assets/dystopia_logo_name.webp";
 import groupPhoto from "../assets/DYSTOPIA_group_foto.jpg";
-import dystopiaSchematic from "../assets/dystopia_schematic.png";
+import dystopiaSchematic from "../assets/dystopia_schematic.webp";
 import backgroundVideo1 from "../assets/nemlatszik_1.mp4";
 import backgroundVideo2 from "../assets/nemlatszik_2.mp4";
 import backgroundVideo3 from "../assets/amivel_1.mp4";
