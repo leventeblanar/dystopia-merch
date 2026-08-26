@@ -154,18 +154,21 @@ const pressKitItems = [
     label: "EPK",
     sub: "Electronic Press Kit",
     icon: "epk",
+    href: "https://drive.google.com/drive/folders/13CZt3iul50FGvIYAXiBpNLIF6PG9IKXM",
   },
   {
     key: "logos",
     label: "Logók és plakátanyagok",
     sub: "Zenekari logó, plakátanyagok",
     icon: "logos",
+    href: "https://www.dropbox.com/scl/fo/6jlh1u10h7s016kfywzfh/AGvoz6cEZNGWs1FhbSv0dtU?rlkey=zntraa9vm9574j6gf79wmhowb&dl=0",
   },
   {
     key: "rider",
     label: "Rider",
     sub: "Technikai rider",
     icon: "rider",
+    href: "https://docs.google.com/document/d/1EggUJrOqercJXJXnnlBfbkWhlctjt0v-/export?format=pdf",
   },
 ];
 
@@ -960,7 +963,9 @@ function HomePage() {
               <div className="bio-content">
 
                 <p className="bio-lead">
-                  A Dystopia egy magyar metal zenekar, amelyben nagyon nehéz megkérni a fiúkat, hogy adjanak egy rendes Bio leírást, úgyhogy lefordíttattam a Spotifyosat magyarra és átalakítottam T/1-es megszólalásra. Ha nem tetszik, meg lehet nyalni az izzad golyóimat.
+                  Olyan zenét írunk, amelyet mi is szívesen hallgatnánk: súlyos, dallamos, változatos progresszív metalt.
+
+                  Számunkra a dalszerzés mindig többről szól, mint témák egymás utánjáról. Minden dalnak saját története és atmoszférája van. Inspirációink között ugyanúgy ott vannak a személyes élmények, mint azok a kérdések és feszültségek, amelyek körülvesznek bennünket.
                 </p>
 
 
@@ -974,17 +979,46 @@ function HomePage() {
                 >
                   <div className="bio-details-inner">
 
-                    <p className="long-bio-desc">
-                      A történetünk 2003 forró nyarán kezdődött. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive.
+                    <div className="long-bio-desc">
+                      <p>
+                        A történetünk 2003 nyaráig vezethető vissza. A kezdeti évek után 2007 körül kezdett igazán kialakulni az a zenei világ, amelyet ma is magunkénak érzünk. Ebben az évben jelent meg első albumunk, az Incompetence Drive. Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel.
+                      </p>
+                      <p>
+                        Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk. 2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatójának döntőjén. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
+                      </p>
+                      <p>
+                        A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
+                      </p>
+                      <p>
+                        A lemezbemutató országos körút után az új dalok már új zenei koncepció alapján, emellett magyar nyelven íródtak. Az új irányt a 2024-ben megjelent Mesterlövész EP-n összegeztük. Ezt követően a folyamatos koncertezés mellett ráfordultunk a nagylemez megírására, amely várhatóan 2026 őszén lát napvilágot.
+                      </p>
+                      <p>
+                        Többször körbejártuk az országot, számos zenekarral a klubkoncertektől egészen a nagyobb fesztiválok színpadáig. Előzenekarként végigkoncerteztük az országot a Subscribe–ROAD, a Leander Rising–Rómeó Vérzik, valamint a FISH! zenekarokkal, egy-egy tematikus országos turné keretein belül. Emellett olyan zenekarokkal osztottuk meg többször is a színpadot, mint a Lazarvs, az Ørdøg, a Down For Whatever, a Nova Prospect, a Wendigo, a Wall of Sleep, a Tiansen és még sokan mások.
+                      </p>
+                      <p>
+                        Rendszeres fellépői vagyunk a Vörös Attila (Nevermore, TYR, Satyricon, Tankcsapda, Leander Rising) nevével fémjelzett Hungarian Ride for Dime eseménynek, amelyek mindig hatalmas élményt jelentenek a zenekar életében.
+                      </p>
 
-                      Zenénket intenzív, mégis erősen dallamos metálként tudnánk leírni, amelyben a progresszív metal, a southern metal, a metalcore és időnként az arénarock hatásai is találkoznak. Dalszövegeinkben személyes és filozofikus témákat dolgozunk fel. Még akkor is igyekszünk reményt hagyni bennetek, amikor kritikusabb hangot ütünk meg.
+                      <p className="bio-venues">
+                        <strong>Jelentősebb koncerthelyszínek:</strong>
+                        <br />
+                        Wacken Open Air, Rockmaraton, Metal Factory Fesztivál, Szegedi Ifjúsági Napok, Prog Camp,
+                        <br />
+                        Alpárfeszt, Barba Negra Budapest, A38 Budapest, Dürer Kert Budapest, JATE Klub Szeged,
+                        <br />
+                        Ápoló Klub Kecskemét, Pécsi Est Cafe Pécs
+                      </p>
 
-                      Második albumunk, a Way to Unfold 2014 áprilisában jelent meg. Egy évvel később elkészítettük Sting Englishman in New York című dalának feldolgozását, amely azóta is az egyik legkeresettebb felvételünk.
-
-                      2016-ban lehetőségünk nyílt fellépni a Wacken Open Air színpadán, a világ egyik legnagyobb metal tehetségkutatóján. Ez az élmény arra ösztönzött bennünket, hogy új szintre emeljük mindazt, amit a zenekarral képviselünk.
-
-                      A következő korszak első dala, a Purge Yourself 2018. március 22-én jelent meg videóklippel együtt a YouTube-on. Ugyanezen év nyarán kiadtuk harmadik stúdióalbumunkat, a Building Bridges-t. Az albumhoz elkészült a The Remedy Engine videóklipje is, a dal pedig helyet kapott a Legacy magazin 2018-as nyári számának különleges CD-mellékletén, a The Hungarian Legacy-n.
-                    </p>
+                      <p className="bio-lineup">
+                        Vári Gábor – gitár, ének
+                        <br />
+                        Blanár Levente – gitár, ének
+                        <br />
+                        Rácz András – dob
+                        <br />
+                        Bajusz Péter – basszusgitár, ének
+                      </p>
+                    </div>
 
                   </div>
                 </div>
@@ -1129,9 +1163,11 @@ function HomePage() {
                     <a
                       key={item.key}
                       className="press-kit-item"
-                      href="#"
-                      onClick={(event) => event.preventDefault()}
-                      title={`${item.label} – hamarosan elérhető`}
+                      href={item.href ?? "#"}
+                      target={item.href ? "_blank" : undefined}
+                      rel={item.href ? "noopener noreferrer" : undefined}
+                      onClick={item.href ? undefined : (event) => event.preventDefault()}
+                      title={item.href ? item.label : `${item.label} – hamarosan elérhető`}
                     >
                       <span className="press-kit-item-icon" aria-hidden="true">
                         <PressKitIcon icon={item.icon} />

@@ -1545,9 +1545,24 @@ span.merch-showcase-dot--active {
 }
 
 .bio-content .long-bio-desc {
-  margin-bottom: 0;
+  letter-spacing: 0.4px;
+}
 
-  letter-spacing: 3px;
+.bio-content .long-bio-desc p:last-child {
+  margin-bottom: 0;
+}
+
+.bio-content .bio-venues,
+.bio-content .bio-lineup {
+  color: rgba(255, 255, 255, 0.56);
+
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.bio-content .bio-venues strong {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 600;
 }
 
 .bio-details {

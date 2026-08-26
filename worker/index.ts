@@ -7,6 +7,7 @@ import { SHIPPING_FEE_HUF } from "../shared/constants";
 // amounts sent to the Checkout/Payment APIs in the currency's subunit —
 // https://stripe.com/docs/currencies#special-cases
 const STRIPE_SUBUNIT_CHARGE_CURRENCIES = new Set(["huf", "twd"]);
+const ADMIN_PANEL_URL = "https://dystopiahungary.com/admin";
 
 function toStripeUnitAmount(amount: number, currency: string): number {
   return STRIPE_SUBUNIT_CHARGE_CURRENCIES.has(currency.toLowerCase())
@@ -235,30 +236,28 @@ async function sendOrderNotificationEmail(
   items: OrderItemRow[],
 ): Promise<void> {
   try {
-    const itemsSubtotal = items.reduce(
-      (sum, item) => sum + item.unit_price * item.quantity,
-      0,
-    );
+    const bodyHtml = `
+            <tr>
+              <td style="padding: 32px 40px 8px;">
+                <h2 style="margin: 0 0 8px; color: #ffffff; font-size: 19px;">Új rendelés érkezett</h2>
+                <p style="margin: 0; color: #b7b2ba; font-size: 14px; line-height: 1.6;">
+                  ${escapeHtml(order.customer_name)} (${escapeHtml(order.customer_email)} &middot; ${escapeHtml(order.customer_phone)})
+                  leadott egy rendelést. Az alábbiakban a rendelés részletei olvashatók.
+                </p>
+              </td>
+            </tr>
 
-    const itemsHtml = items
-      .map(
-        (item) =>
-          `<li>${escapeHtml(item.product_name)} (${escapeHtml(item.variant_size)}) &times; ${item.quantity} &mdash; ${formatHuf(
-            item.unit_price * item.quantity,
-            order.currency,
-          )}</li>`,
-      )
-      .join("");
+            ${renderOrderReferenceRow(order)}
+            ${renderOrderItemsBlock(order, items)}
+            ${renderShippingAddressBlock(order)}
 
-    const html = `
-      <h2>Új rendelés #${order.id}</h2>
-      <p><strong>${escapeHtml(order.customer_name)}</strong><br>${escapeHtml(order.customer_email)} · ${escapeHtml(order.customer_phone)}</p>
-      <p>${escapeHtml(order.shipping_postal_code)} ${escapeHtml(order.shipping_city)}, ${escapeHtml(order.shipping_street_address)}</p>
-      ${order.shipping_note ? `<p>Megjegyzés: ${escapeHtml(order.shipping_note)}</p>` : ""}
-      <ul>${itemsHtml}</ul>
-      <p>Részösszeg: ${formatHuf(itemsSubtotal, order.currency)}<br>Szállítás: ${formatHuf(SHIPPING_FEE_HUF, order.currency)}</p>
-      <p>Összesen: <strong>${formatHuf(order.total_amount, order.currency)}</strong></p>
-    `;
+            <tr>
+              <td style="padding: 28px 40px 0;" align="center">
+                <a href="${ADMIN_PANEL_URL}" style="display: inline-block; background-color: #a91c32; color: #ffffff; text-decoration: none; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; padding: 14px 28px; border-radius: 8px;">
+                  Rendelés kezelése
+                </a>
+              </td>
+            </tr>`;
 
     const recipients = env.ORDER_NOTIFICATION_EMAIL.split(",")
       .map((entry) => entry.trim())
@@ -267,14 +266,20 @@ async function sendOrderNotificationEmail(
     await sendViaResend(env, {
       to: recipients,
       subject: `Új rendelés #${order.id} — ${formatHuf(order.total_amount, order.currency)}`,
-      html,
+      html: renderEmailShell(
+        bodyHtml,
+        "Ez egy automatikus értesítés az új rendelésről.",
+      ),
     });
   } catch (error) {
     console.error("Failed to send order notification email", error);
   }
 }
 
-function renderEmailShell(bodyHtml: string): string {
+function renderEmailShell(
+  bodyHtml: string,
+  footerText = "Ha kérdésed van a rendeléseddel kapcsolatban, válaszolj erre az emailre.",
+): string {
   return `
 <!doctype html>
 <html lang="hu">
@@ -300,7 +305,7 @@ function renderEmailShell(bodyHtml: string): string {
             <tr>
               <td style="padding: 32px 40px 40px; text-align: center;">
                 <p style="margin: 0; color: #5c565f; font-size: 12px; line-height: 1.6;">
-                  Ha kérdésed van a rendeléseddel kapcsolatban, válaszolj erre az emailre.
+                  ${footerText}
                 </p>
               </td>
             </tr>
