@@ -1155,8 +1155,8 @@ function HomePage() {
                 <p className="contact-card-label">Booking</p>
                 
                 <h3>Koncertszervezés</h3>
-                <p>booking@dystopia.hu</p>
-                <p>+36 30 123 4567</p>
+                <p>dystopiahungary@gmail.com</p>
+                <p>+36 20 315 7188</p>
 
                 <div className="press-kit-list" aria-label="Sajtó- és technikai anyagok">
                   {pressKitItems.map((item) => (

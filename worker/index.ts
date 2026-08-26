@@ -215,7 +215,7 @@ async function sendViaResend(
   env: Env,
   params: { to: string | string[]; subject: string; html: string },
 ): Promise<void> {
-  await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
@@ -228,6 +228,13 @@ async function sendViaResend(
       html: params.html,
     }),
   });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(
+      `Resend request failed (${response.status}): ${errorBody}`,
+    );
+  }
 }
 
 async function sendOrderNotificationEmail(
