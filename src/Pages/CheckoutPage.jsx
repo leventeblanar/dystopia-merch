@@ -3,7 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
 
-import { SHIPPING_FEE_HUF } from "../../shared/constants";
+import {
+  SHIPPING_FEE_HUF,
+  SIZELESS_VARIANT_LABEL,
+  formatSizeCutLabel,
+} from "../../shared/constants";
 
 import checkoutHeaderBackground from "../assets/dystopia_background_3.jpg";
 
@@ -274,7 +278,10 @@ function CheckoutPage() {
                 key={item.variantId}
               >
                 <span>
-                  {item.name} ({item.size}) × {item.quantity}
+                  {item.name}
+                  {item.size !== SIZELESS_VARIANT_LABEL &&
+                    ` (${formatSizeCutLabel(item.size, item.cut)})`} ×{" "}
+                  {item.quantity}
                 </span>
 
                 <span>

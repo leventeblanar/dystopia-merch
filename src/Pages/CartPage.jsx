@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
+import { SIZELESS_VARIANT_LABEL, formatSizeCutLabel } from "../../shared/constants";
 
 import cartHeaderBackground from "../assets/dystopia_background_2.jpg";
 
@@ -132,9 +133,11 @@ function CartPage() {
                       {item.name}
                     </h2>
 
-                    <p className="cart-item-size">
-                      Méret: {item.size}
-                    </p>
+                    {item.size !== SIZELESS_VARIANT_LABEL && (
+                      <p className="cart-item-size">
+                        Méret: {formatSizeCutLabel(item.size, item.cut)}
+                      </p>
+                    )}
 
                     <p className="cart-item-unit-price">
                       {Number(

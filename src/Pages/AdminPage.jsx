@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import {
+  SIZELESS_VARIANT_LABEL,
+  VARIANT_CUTS,
+  CUT_LABELS,
+  PRODUCT_CATEGORIES,
+  PRODUCT_CATEGORY_LABELS,
+  formatSizeCutLabel,
+} from "../../shared/constants";
+
 import "./AdminPage.css";
 
 async function parseJsonResponse(response) {
@@ -19,6 +28,7 @@ const emptyProductForm = {
   description: "",
   price: "",
   currency: "HUF",
+  category: PRODUCT_CATEGORIES[0],
   active: true,
 };
 
@@ -47,6 +57,7 @@ function ProductForm({ initialValue, submitLabel, onSubmit, onCancel }) {
         description: form.description || null,
         price: Number(form.price),
         currency: form.currency || "HUF",
+        category: form.category,
         active: Boolean(form.active),
       });
     } catch (submitError) {
@@ -110,6 +121,20 @@ function ProductForm({ initialValue, submitLabel, onSubmit, onCancel }) {
           />
         </div>
 
+        <div className="admin-field admin-field--narrow">
+          <label>Kategória</label>
+          <select
+            value={form.category}
+            onChange={handleChange("category")}
+          >
+            {PRODUCT_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {PRODUCT_CATEGORY_LABELS[category]}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <label className="admin-checkbox-field">
           <input
             type="checkbox"
@@ -138,9 +163,15 @@ function ProductForm({ initialValue, submitLabel, onSubmit, onCancel }) {
 }
 
 function VariantEditor({ productId, variants, onChanged }) {
-  const [form, setForm] = useState({ size: "", stock: "", sku: "" });
+  const [form, setForm] = useState({ size: "", cut: "unisex", stock: "", sku: "" });
+  const [sizeless, setSizeless] = useState(false);
   const [error, setError] = useState(null);
   const [adjustDrafts, setAdjustDrafts] = useState({});
+
+  const hasSizelessVariant = variants.some(
+    (variant) => variant.size === SIZELESS_VARIANT_LABEL,
+  );
+  const canOfferSizeless = variants.length === 0;
 
   const handleAdd = async (event) => {
     event.preventDefault();
@@ -151,14 +182,16 @@ function VariantEditor({ productId, variants, onChanged }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          size: form.size,
+          size: sizeless ? SIZELESS_VARIANT_LABEL : form.size,
+          cut: sizeless ? "unisex" : form.cut,
           stock: Number(form.stock),
           sku: form.sku || null,
         }),
       });
 
       await parseJsonResponse(response);
-      setForm({ size: "", stock: "", sku: "" });
+      setForm({ size: "", cut: "unisex", stock: "", sku: "" });
+      setSizeless(false);
       onChanged();
     } catch (addError) {
       setError(addError.message);
@@ -172,6 +205,7 @@ function VariantEditor({ productId, variants, onChanged }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           size: variant.size,
+          cut: variant.cut,
           stock: Number(stock),
           sku: variant.sku,
         }),
@@ -221,12 +255,15 @@ function VariantEditor({ productId, variants, onChanged }) {
 
   return (
     <div className="admin-variants">
-      <p className="admin-subheading">Méretek / készlet</p>
+      <p className="admin-subheading">
+        {hasSizelessVariant ? "Készlet" : "Méretek / készlet"}
+      </p>
 
       <table className="admin-table admin-table--compact">
         <thead>
           <tr>
             <th>Méret</th>
+            <th>Szabás</th>
             <th>Készlet</th>
             <th>SKU</th>
             <th></th>
@@ -236,7 +273,12 @@ function VariantEditor({ productId, variants, onChanged }) {
         <tbody>
           {variants.map((variant) => (
             <tr key={variant.id}>
-              <td>{variant.size}</td>
+              <td>{variant.size === SIZELESS_VARIANT_LABEL ? "—" : variant.size}</td>
+              <td>
+                {variant.size === SIZELESS_VARIANT_LABEL
+                  ? "—"
+                  : (CUT_LABELS[variant.cut] ?? variant.cut)}
+              </td>
               <td>
                 <div className="admin-stock-cell">
                   <input
@@ -286,39 +328,76 @@ function VariantEditor({ productId, variants, onChanged }) {
         </tbody>
       </table>
 
-      <form className="admin-inline-form" onSubmit={handleAdd}>
-        <input
-          type="text"
-          placeholder="Méret (pl. M)"
-          required
-          value={form.size}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, size: event.target.value }))
-          }
-        />
+      {hasSizelessVariant ? (
+        <p className="admin-status">
+          Ez egy nem méretfüggő termék, a fenti sorban módosíthatod a
+          készletét.
+        </p>
+      ) : (
+        <form className="admin-inline-form" onSubmit={handleAdd}>
+          {canOfferSizeless && (
+            <label className="admin-checkbox-field">
+              <input
+                type="checkbox"
+                checked={sizeless}
+                onChange={(event) => setSizeless(event.target.checked)}
+              />
+              Nem méretfüggő termék (pl. kulcstartó)
+            </label>
+          )}
 
-        <input
-          type="number"
-          placeholder="Készlet"
-          min="0"
-          required
-          value={form.stock}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, stock: event.target.value }))
-          }
-        />
+          {!sizeless && (
+            <input
+              type="text"
+              placeholder="Méret (pl. M)"
+              required
+              value={form.size}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, size: event.target.value }))
+              }
+            />
+          )}
 
-        <input
-          type="text"
-          placeholder="SKU (opcionális)"
-          value={form.sku}
-          onChange={(event) =>
-            setForm((current) => ({ ...current, sku: event.target.value }))
-          }
-        />
+          {!sizeless && (
+            <select
+              value={form.cut}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, cut: event.target.value }))
+              }
+            >
+              {VARIANT_CUTS.map((cut) => (
+                <option key={cut} value={cut}>
+                  {CUT_LABELS[cut]}
+                </option>
+              ))}
+            </select>
+          )}
 
-        <button type="submit">Méret hozzáadása</button>
-      </form>
+          <input
+            type="number"
+            placeholder="Készlet"
+            min="0"
+            required
+            value={form.stock}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, stock: event.target.value }))
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="SKU (opcionális)"
+            value={form.sku}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, sku: event.target.value }))
+            }
+          />
+
+          <button type="submit">
+            {sizeless ? "Termék hozzáadása" : "Méret hozzáadása"}
+          </button>
+        </form>
+      )}
 
       {error && <p className="admin-error">{error}</p>}
     </div>
@@ -456,6 +535,7 @@ function ProductRow({ product, onChanged }) {
           <span>
             {Number(product.price).toLocaleString("hu-HU")} {product.currency}
           </span>
+          <span>{PRODUCT_CATEGORY_LABELS[product.category] ?? product.category}</span>
           <span className={product.active ? "admin-badge-active" : "admin-badge-inactive"}>
             {product.active ? "Aktív" : "Inaktív"}
           </span>
@@ -484,6 +564,7 @@ function ProductRow({ product, onChanged }) {
             description: product.description ?? "",
             price: String(product.price),
             currency: product.currency,
+            category: product.category,
             active: Boolean(product.active),
           }}
           submitLabel="Mentés"
@@ -721,7 +802,10 @@ function OrdersTab() {
                       <ul className="admin-order-items">
                         {order.items.map((item) => (
                           <li key={item.id}>
-                            {item.product_name} ({item.variant_size}) × {item.quantity} —{" "}
+                            {item.product_name}
+                            {item.variant_size !== SIZELESS_VARIANT_LABEL &&
+                              ` (${formatSizeCutLabel(item.variant_size, item.variant_cut)})`}{" "}
+                            × {item.quantity} —{" "}
                             {(item.unit_price * item.quantity).toLocaleString("hu-HU")}{" "}
                             {order.currency}
                           </li>

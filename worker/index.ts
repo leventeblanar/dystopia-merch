@@ -1,7 +1,15 @@
 import Stripe from "stripe";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
-import { SHIPPING_FEE_HUF } from "../shared/constants";
+import {
+  SHIPPING_FEE_HUF,
+  SIZELESS_VARIANT_LABEL,
+  VARIANT_CUTS,
+  PRODUCT_CATEGORIES,
+  formatSizeCutLabel,
+  type VariantCut,
+  type ProductCategory,
+} from "../shared/constants";
 
 // Stripe pays out HUF/TWD as zero-decimal currencies, but still requires
 // amounts sent to the Checkout/Payment APIs in the currency's subunit —
@@ -22,12 +30,14 @@ type ProductRow = {
   description: string | null;
   price: number;
   currency: string;
+  category: string;
 };
 
 type VariantRow = {
   id: number;
   product_id: number;
   size: string;
+  cut: string;
   stock: number;
   sku: string | null;
 };
@@ -48,6 +58,7 @@ type AdminProductRow = ProductRow & {
 type VariantWithProductRow = {
   variant_id: number;
   size: string;
+  cut: string;
   stock: number;
   product_id: number;
   product_name: string;
@@ -79,6 +90,7 @@ type OrderItemRow = {
   product_variant_id: number | null;
   product_name: string;
   variant_size: string;
+  variant_cut: string;
   unit_price: number;
   quantity: number;
 };
@@ -349,7 +361,11 @@ function renderOrderItemsBlock(order: OrderRow, items: OrderItemRow[]): string {
             <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px;">
               ${escapeHtml(item.product_name)}
               <span style="display: block; color: #8a848c; font-size: 12px; margin-top: 2px;">
-                Méret: ${escapeHtml(item.variant_size)} &middot; ${item.quantity} db
+                ${
+                  item.variant_size === SIZELESS_VARIANT_LABEL
+                    ? `${item.quantity} db`
+                    : `Méret: ${escapeHtml(formatSizeCutLabel(item.variant_size, item.variant_cut))} &middot; ${item.quantity} db`
+                }
               </span>
             </td>
             <td style="padding: 14px 0; border-bottom: 1px solid #262228; color: #f5f5f5; font-size: 14px; text-align: right; white-space: nowrap;">
@@ -551,6 +567,7 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
       variantId: number;
       productName: string;
       size: string;
+      cut: string;
       unitPrice: number;
       quantity: number;
       currency: string;
@@ -562,6 +579,7 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
         SELECT
           pv.id AS variant_id,
           pv.size,
+          pv.cut,
           pv.stock,
           p.id AS product_id,
           p.name AS product_name,
@@ -585,9 +603,14 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
       }
 
       if (row.stock < item.quantity) {
+        const label =
+          row.size === SIZELESS_VARIANT_LABEL
+            ? row.product_name
+            : `${row.product_name} (${formatSizeCutLabel(row.size, row.cut)})`;
+
         return Response.json(
           {
-            error: `Nincs elég készleten a(z) "${row.product_name} (${row.size})" termékből.`,
+            error: `Nincs elég készleten a(z) "${label}" termékből.`,
           },
           { status: 409 },
         );
@@ -597,6 +620,7 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
         variantId: row.variant_id,
         productName: row.product_name,
         size: row.size,
+        cut: row.cut,
         unitPrice: row.price,
         quantity: item.quantity,
         currency: row.currency,
@@ -639,14 +663,15 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
         env.DB.prepare(
           `
           INSERT INTO order_items (
-            order_id, product_variant_id, product_name, variant_size, unit_price, quantity
-          ) VALUES (?, ?, ?, ?, ?, ?)
+            order_id, product_variant_id, product_name, variant_size, variant_cut, unit_price, quantity
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
           `,
         ).bind(
           orderId,
           lineItem.variantId,
           lineItem.productName,
           lineItem.size,
+          lineItem.cut,
           lineItem.unitPrice,
           lineItem.quantity,
         ),
@@ -669,7 +694,10 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
               lineItem.currency,
             ),
             product_data: {
-              name: `${lineItem.productName} (${lineItem.size})`,
+              name:
+                lineItem.size === SIZELESS_VARIANT_LABEL
+                  ? lineItem.productName
+                  : `${lineItem.productName} (${formatSizeCutLabel(lineItem.size, lineItem.cut)})`,
             },
           },
         })),
@@ -802,10 +830,16 @@ async function attachVariantsAndImages<T extends { id: number }>(
     products.map(async (product) => {
       const variantsResult = await env.DB.prepare(
         `
-        SELECT id, product_id, size, stock, sku
+        SELECT id, product_id, size, cut, stock, sku
         FROM product_variants
         WHERE product_id = ?
         ORDER BY
+          CASE cut
+            WHEN 'unisex' THEN 1
+            WHEN 'ferfi' THEN 2
+            WHEN 'noi' THEN 3
+            ELSE 4
+          END,
           CASE UPPER(size)
             WHEN 'XS' THEN 1
             WHEN 'S' THEN 2
@@ -852,6 +886,7 @@ type ProductInput = {
   price: number;
   currency?: string;
   active?: boolean;
+  category: ProductCategory;
 };
 
 function validateProductInput(body: unknown): body is ProductInput {
@@ -859,7 +894,7 @@ function validateProductInput(body: unknown): body is ProductInput {
     return false;
   }
 
-  const { name, slug, price, currency, active, description } =
+  const { name, slug, price, currency, active, description, category } =
     body as Record<string, unknown>;
 
   if (!isNonEmptyString(name) || !isNonEmptyString(slug)) {
@@ -882,11 +917,19 @@ function validateProductInput(body: unknown): body is ProductInput {
     return false;
   }
 
+  if (
+    typeof category !== "string" ||
+    !PRODUCT_CATEGORIES.includes(category as ProductCategory)
+  ) {
+    return false;
+  }
+
   return true;
 }
 
 type VariantInput = {
   size: string;
+  cut?: VariantCut;
   stock: number;
   sku?: string | null;
 };
@@ -896,9 +939,16 @@ function validateVariantInput(body: unknown): body is VariantInput {
     return false;
   }
 
-  const { size, stock, sku } = body as Record<string, unknown>;
+  const { size, cut, stock, sku } = body as Record<string, unknown>;
 
   if (!isNonEmptyString(size)) {
+    return false;
+  }
+
+  if (
+    cut !== undefined &&
+    (typeof cut !== "string" || !VARIANT_CUTS.includes(cut as VariantCut))
+  ) {
     return false;
   }
 
@@ -980,7 +1030,7 @@ async function handleAdminRequest(
     if (path === "/api/admin/products" && request.method === "GET") {
       const productsResult = await env.DB.prepare(
         `
-        SELECT id, name, slug, description, price, currency, active, created_at
+        SELECT id, name, slug, description, price, currency, category, active, created_at
         FROM products
         ORDER BY id DESC
         `,
@@ -1003,8 +1053,8 @@ async function handleAdminRequest(
 
       const insert = await env.DB.prepare(
         `
-        INSERT INTO products (name, slug, description, price, currency, active)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO products (name, slug, description, price, currency, category, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
       )
         .bind(
@@ -1013,6 +1063,7 @@ async function handleAdminRequest(
           body.description ?? null,
           body.price,
           body.currency ?? "HUF",
+          body.category,
           body.active === false ? 0 : 1,
         )
         .run();
@@ -1037,7 +1088,7 @@ async function handleAdminRequest(
       const result = await env.DB.prepare(
         `
         UPDATE products
-        SET name = ?, slug = ?, description = ?, price = ?, currency = ?, active = ?
+        SET name = ?, slug = ?, description = ?, price = ?, currency = ?, category = ?, active = ?
         WHERE id = ?
         `,
       )
@@ -1047,6 +1098,7 @@ async function handleAdminRequest(
           body.description ?? null,
           body.price,
           body.currency ?? "HUF",
+          body.category,
           body.active === false ? 0 : 1,
           productId,
         )
@@ -1106,11 +1158,11 @@ async function handleAdminRequest(
 
       const insert = await env.DB.prepare(
         `
-        INSERT INTO product_variants (product_id, size, stock, sku)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO product_variants (product_id, size, cut, stock, sku)
+        VALUES (?, ?, ?, ?, ?)
         `,
       )
-        .bind(productId, body.size, body.stock, body.sku ?? null)
+        .bind(productId, body.size, body.cut ?? "unisex", body.stock, body.sku ?? null)
         .run();
 
       return Response.json({ id: insert.meta.last_row_id }, { status: 201 });
@@ -1128,9 +1180,9 @@ async function handleAdminRequest(
       }
 
       const result = await env.DB.prepare(
-        "UPDATE product_variants SET size = ?, stock = ?, sku = ? WHERE id = ?",
+        "UPDATE product_variants SET size = ?, cut = ?, stock = ?, sku = ? WHERE id = ?",
       )
-        .bind(body.size, body.stock, body.sku ?? null, variantId)
+        .bind(body.size, body.cut ?? "unisex", body.stock, body.sku ?? null, variantId)
         .run();
 
       if (result.meta.changes === 0) {
@@ -1518,7 +1570,8 @@ export default {
                 slug,
                 description,
                 price,
-                currency
+                currency,
+                category
             FROM products
             WHERE active = 1
             ORDER BY id DESC

@@ -1,17 +1,56 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import {
+  SIZELESS_VARIANT_LABEL,
+  VARIANT_CUTS,
+  CUT_LABELS,
+  PRODUCT_CATEGORIES,
+  PRODUCT_CATEGORY_LABELS,
+  formatSizeCutLabel,
+} from "../../shared/constants";
 
 import dystopiaLogo from "../assets/dystopia-logo.webp";
 import merchHeaderBackground from "../assets/dystopia_background_1.jpg";
 
 import "./MerchPage.css";
 
+// Mirrors the size ordering used by the /api/products query, so filter
+// pills line up the same way the size buttons on a product card do.
+const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+function sortSizes(sizes) {
+  return [...sizes].sort((a, b) => {
+    const indexA = SIZE_ORDER.indexOf(a.toUpperCase());
+    const indexB = SIZE_ORDER.indexOf(b.toUpperCase());
+
+    if (indexA === -1 && indexB === -1) {
+      return a.localeCompare(b);
+    }
+
+    if (indexA === -1) {
+      return 1;
+    }
+
+    if (indexB === -1) {
+      return -1;
+    }
+
+    return indexA - indexB;
+  });
+}
+
 function ProductCard({ product }) {
   const { addToCart } = useCart();
 
+  const isSizeless =
+    product.variants?.length === 1 &&
+    product.variants[0].size === SIZELESS_VARIANT_LABEL;
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [selectedVariantId, setSelectedVariantId] = useState(
+    isSizeless ? product.variants[0].id : null
+  );
   const [quantity, setQuantity] = useState(1)
   const [justAdded, setJustAdded] = useState(false);
 
@@ -73,6 +112,7 @@ function ProductCard({ product }) {
     variantId: selectedVariant.id,
     name: product.name,
     size: selectedVariant.size,
+    cut: selectedVariant.cut,
     quantity,
     price: product.price,
     image: product.images?.[0]?.url ?? null,
@@ -131,6 +171,7 @@ function ProductCard({ product }) {
           {product.description}
         </p>
 
+        {!isSizeless && (
         <div className="product-size-block">
           <p className="product-size-label">
             Elérhető méretek
@@ -164,12 +205,13 @@ function ProductCard({ product }) {
                     setJustAdded(false);
                   }}
                 >
-                  {variant.size}
+                  {formatSizeCutLabel(variant.size, variant.cut)}
                 </button>
               );
             })}
           </div>
         </div>
+        )}
         <div className="product-quantity-block">
           <p className="product-quantity-label">
             Darabszám
@@ -231,6 +273,60 @@ function MerchPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSize, setSelectedSize] = useState("all");
+  const [selectedCut, setSelectedCut] = useState("all");
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category);
+    setSelectedSize("all");
+    setSelectedCut("all");
+  };
+
+  const availableSizes = useMemo(() => {
+    const sizes = new Set();
+
+    products.forEach((product) => {
+      if (product.category !== "polo") {
+        return;
+      }
+
+      product.variants?.forEach((variant) => {
+        if (variant.size !== SIZELESS_VARIANT_LABEL) {
+          sizes.add(variant.size);
+        }
+      });
+    });
+
+    return sortSizes([...sizes]);
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      if (selectedCategory !== "all" && product.category !== selectedCategory) {
+        return false;
+      }
+
+      if (selectedCategory === "polo") {
+        if (
+          selectedSize !== "all" &&
+          !product.variants?.some((variant) => variant.size === selectedSize)
+        ) {
+          return false;
+        }
+
+        if (
+          selectedCut !== "all" &&
+          !product.variants?.some((variant) => variant.cut === selectedCut)
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [products, selectedCategory, selectedSize, selectedCut]);
 
   useEffect(() => {
     window.scrollTo({
@@ -337,7 +433,9 @@ function MerchPage() {
                       <strong>{item.name}</strong>
 
                       <span>
-                        {item.size} · {item.quantity} db
+                        {item.size === SIZELESS_VARIANT_LABEL
+                          ? `${item.quantity} db`
+                          : `${formatSizeCutLabel(item.size, item.cut)} · ${item.quantity} db`}
                       </span>
 
                       <span>
@@ -388,6 +486,101 @@ function MerchPage() {
       <div className="merch-title-line" />
     </section>
 
+    {!loading && !error && products.length > 0 && (
+      <section className="merch-filter-bar">
+        <div className="merch-filter-group">
+          <span className="merch-filter-label">Kategória</span>
+
+          <div className="merch-filter-options">
+            <button
+              type="button"
+              className={`merch-filter-button ${
+                selectedCategory === "all" ? "merch-filter-button--selected" : ""
+              }`}
+              onClick={() => handleCategoryChange("all")}
+            >
+              Mind
+            </button>
+
+            {PRODUCT_CATEGORIES.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`merch-filter-button ${
+                  selectedCategory === category ? "merch-filter-button--selected" : ""
+                }`}
+                onClick={() => handleCategoryChange(category)}
+              >
+                {PRODUCT_CATEGORY_LABELS[category]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {selectedCategory === "polo" && availableSizes.length > 0 && (
+          <div className="merch-filter-group">
+            <span className="merch-filter-label">Méret</span>
+
+            <div className="merch-filter-options">
+              <button
+                type="button"
+                className={`merch-filter-button ${
+                  selectedSize === "all" ? "merch-filter-button--selected" : ""
+                }`}
+                onClick={() => setSelectedSize("all")}
+              >
+                Mind
+              </button>
+
+              {availableSizes.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  className={`merch-filter-button ${
+                    selectedSize === size ? "merch-filter-button--selected" : ""
+                  }`}
+                  onClick={() => setSelectedSize(size)}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedCategory === "polo" && (
+          <div className="merch-filter-group">
+            <span className="merch-filter-label">Szabás</span>
+
+            <div className="merch-filter-options">
+              <button
+                type="button"
+                className={`merch-filter-button ${
+                  selectedCut === "all" ? "merch-filter-button--selected" : ""
+                }`}
+                onClick={() => setSelectedCut("all")}
+              >
+                Mind
+              </button>
+
+              {VARIANT_CUTS.map((cut) => (
+                <button
+                  key={cut}
+                  type="button"
+                  className={`merch-filter-button ${
+                    selectedCut === cut ? "merch-filter-button--selected" : ""
+                  }`}
+                  onClick={() => setSelectedCut(cut)}
+                >
+                  {CUT_LABELS[cut]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    )}
+
     <section className="merch-products">
       {loading && (
         <p className="merch-status">
@@ -401,9 +594,15 @@ function MerchPage() {
         </p>
       )}
 
+      {!loading && !error && filteredProducts.length === 0 && (
+        <p className="merch-status">
+          Nincs a szűrésnek megfelelő termék.
+        </p>
+      )}
+
       {!loading &&
         !error &&
-        products.map((product) => (
+        filteredProducts.map((product) => (
           <ProductCard
             key={product.id}
             product={product}

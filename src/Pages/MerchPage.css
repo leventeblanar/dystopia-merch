@@ -246,6 +246,66 @@
 
 
 /* -------------------- */
+/* FILTERS              */
+/* -------------------- */
+
+.merch-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 28px;
+
+  width: 100%;
+  max-width: 1180px;
+
+  margin: 0 auto;
+  padding-bottom: clamp(40px, 5vw, 64px);
+}
+
+.merch-filter-group {
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.merch-filter-label {
+  color:
+    rgba(255, 255, 255, 0.4);
+
+  text-transform: uppercase;
+
+  font-size: 0.66rem;
+  font-weight: 700;
+
+  letter-spacing: 0.22em;
+}
+
+.merch-filter-options {
+  display: flex;
+  gap: 10px;
+
+  flex-wrap: wrap;
+}
+
+.merch-filter-button {
+  display: inline-grid;
+  place-items: center;
+
+  min-width: 46px;
+  height: 42px;
+
+  padding: 0 16px;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 0.78rem;
+
+  cursor: pointer;
+}
+
+
+/* -------------------- */
 /* PRODUCTS             */
 /* -------------------- */
 
@@ -464,7 +524,8 @@
 .product-quantity button,
 .add-to-cart-button,
 .merch-cart-button,
-.mini-cart-link {
+.mini-cart-link,
+.merch-filter-button {
   border: 0;
 
   background-color:
@@ -522,7 +583,8 @@
 .product-quantity button:hover:not(:disabled),
 .add-to-cart-button:hover:not(:disabled),
 .merch-cart-button:hover,
-.mini-cart-link:hover {
+.mini-cart-link:hover,
+.merch-filter-button:hover {
   background-color:
     rgba(31, 26, 31, 0.72);
 
@@ -592,7 +654,8 @@
 }
 
 
-.product-variant-button--selected {
+.product-variant-button--selected,
+.merch-filter-button--selected {
   background-color:
     rgba(47, 34, 41, 0.82);
 
@@ -1295,6 +1358,18 @@
     min-width: 42px;
     height: 38px;
     padding: 0 10px;
+  }
+
+
+  .merch-filter-bar {
+    gap: 20px;
+  }
+
+
+  .merch-filter-button {
+    min-width: 42px;
+    height: 38px;
+    padding: 0 12px;
   }
 
 
