@@ -675,6 +675,82 @@ const ORDER_STATUS_LABELS = {
   cancelled: "Törölve",
 };
 
+const ORDERS_EXPORT_HEADERS = [
+  "Rendelés #",
+  "Ügyfél neve",
+  "Email",
+  "Telefon",
+  "Irányítószám",
+  "Város",
+  "Cím",
+  "Megjegyzés",
+  "Összeg",
+  "Pénznem",
+  "Státusz",
+  "Feldolgozás alatt",
+  "Tételek",
+  "Létrehozva",
+];
+
+function escapeCsvField(value) {
+  const stringValue = value === null || value === undefined ? "" : String(value);
+
+  if (/[",\n;]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+
+  return stringValue;
+}
+
+function buildOrdersCsv(orders) {
+  const rows = orders.map((order) => [
+    order.id,
+    order.customer_name,
+    order.customer_email,
+    order.customer_phone,
+    order.shipping_postal_code,
+    order.shipping_city,
+    order.shipping_street_address,
+    order.shipping_note ?? "",
+    Number(order.total_amount).toLocaleString("hu-HU"),
+    order.currency,
+    ORDER_STATUS_LABELS[order.status] ?? order.status,
+    order.processing ? "Igen" : "Nem",
+    order.items
+      .map(
+        (item) =>
+          `${item.product_name}${
+            item.variant_size !== SIZELESS_VARIANT_LABEL
+              ? ` (${formatSizeCutLabel(item.variant_size, item.variant_cut)})`
+              : ""
+          } x${item.quantity}`,
+      )
+      .join("; "),
+    order.created_at,
+  ]);
+
+  const lines = [ORDERS_EXPORT_HEADERS, ...rows].map((row) =>
+    row.map(escapeCsvField).join(";"),
+  );
+
+  return "﻿" + lines.join("\r\n");
+}
+
+function downloadOrdersExport(orders) {
+  const csvContent = buildOrdersCsv(orders);
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const today = new Date().toISOString().slice(0, 10);
+
+  link.href = url;
+  link.download = `nem_feladott_rendelesek_${today}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function OrdersTab() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -724,6 +800,15 @@ function OrdersTab() {
     <div className="admin-tab">
       <div className="admin-tab-header">
         <h2>Rendelések</h2>
+        <button
+          type="button"
+          disabled={loading || !orders.some((order) => !order.shipped)}
+          onClick={() =>
+            downloadOrdersExport(orders.filter((order) => !order.shipped))
+          }
+        >
+          Nem feladott rendelések exportálása
+        </button>
       </div>
 
       {loading && <p className="admin-status">Betöltés...</p>}
