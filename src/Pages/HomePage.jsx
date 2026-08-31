@@ -933,9 +933,6 @@ function HomePage() {
           <div className="bio-container">
 
             <div className="bio-heading">
-              <p className="section-label">
-                A zenekarról
-              </p>
 
               <h2>Bio</h2>
 
@@ -1030,9 +1027,15 @@ function HomePage() {
                   aria-expanded={bioExpanded}
                   aria-controls="bio-details"
                   onClick={() => {
-                    setBioExpanded(
-                      (current) => !current
-                    );
+                    setBioExpanded((current) => {
+                      if (current) {
+                        bioSectionRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      }
+                      return !current;
+                    });
                   }}
                 >
                   {bioExpanded
@@ -1057,7 +1060,6 @@ function HomePage() {
             }}
           >
             <div className="music-header">
-              <p className="section-label">Zene</p>
               <h2>Zene</h2>
               <span className="music-line"/>
             </div>
@@ -1125,7 +1127,6 @@ function HomePage() {
         <section id="contact" className="contact-section" ref={contactSectionRef}>
           <div className="contact-container">
             <div className="contact-heading">
-              <p className="section-label">Kapcsolat</p>
               <h2>Kapcsolat</h2>
               <span className="contact-line" />
 
