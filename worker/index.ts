@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 import {
-  SHIPPING_FEE_HUF,
+  getShippingFee,
   SIZELESS_VARIANT_LABEL,
   VARIANT_CUTS,
   PRODUCT_CATEGORIES,
@@ -353,6 +353,7 @@ function renderOrderItemsBlock(order: OrderRow, items: OrderItemRow[]): string {
     (sum, item) => sum + item.unit_price * item.quantity,
     0,
   );
+  const shippingFee = order.total_amount - itemsSubtotal;
 
   const itemRows = items
     .map(
@@ -396,7 +397,7 @@ function renderOrderItemsBlock(order: OrderRow, items: OrderItemRow[]): string {
                   <tr>
                     <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px;">Szállítás</td>
                     <td style="padding: 4px 0; color: #b7b2ba; font-size: 13px; text-align: right;">
-                      ${formatHuf(SHIPPING_FEE_HUF, order.currency)}
+                      ${shippingFee > 0 ? formatHuf(shippingFee, order.currency) : "Ingyenes"}
                     </td>
                   </tr>
                   <tr>
@@ -631,7 +632,8 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
       (sum, lineItem) => sum + lineItem.unitPrice * lineItem.quantity,
       0,
     );
-    const totalAmount = itemsSubtotal + SHIPPING_FEE_HUF;
+    const shippingFee = getShippingFee(itemsSubtotal);
+    const totalAmount = itemsSubtotal + shippingFee;
     const currency = lineItems[0].currency;
 
     const orderInsert = await env.DB.prepare(
@@ -701,16 +703,20 @@ async function handleCheckout(request: Request, env: Env): Promise<Response> {
             },
           },
         })),
-        {
-          quantity: 1,
-          price_data: {
-            currency: currency.toLowerCase(),
-            unit_amount: toStripeUnitAmount(SHIPPING_FEE_HUF, currency),
-            product_data: {
-              name: "Szállítási költség",
-            },
-          },
-        },
+        ...(shippingFee > 0
+          ? [
+              {
+                quantity: 1,
+                price_data: {
+                  currency: currency.toLowerCase(),
+                  unit_amount: toStripeUnitAmount(shippingFee, currency),
+                  product_data: {
+                    name: "Szállítási költség",
+                  },
+                },
+              },
+            ]
+          : []),
       ],
       metadata: { orderId: String(orderId) },
       success_url: `${env.PUBLIC_BASE_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,

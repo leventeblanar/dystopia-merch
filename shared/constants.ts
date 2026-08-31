@@ -1,4 +1,19 @@
-export const SHIPPING_FEE_HUF = 2500;
+export const SHIPPING_FEE_HUF = 1990;
+
+// Orders at or above this subtotal ship for free.
+export const FREE_SHIPPING_THRESHOLD_HUF = 20000;
+
+// Shipping fee for a given cart/order subtotal, accounting for the free
+// shipping threshold above.
+export function getShippingFee(subtotal: number): number {
+  return subtotal >= FREE_SHIPPING_THRESHOLD_HUF ? 0 : SHIPPING_FEE_HUF;
+}
+
+// How much more the customer needs to add to the cart to reach free
+// shipping. 0 once the threshold is met.
+export function getFreeShippingRemaining(subtotal: number): number {
+  return Math.max(0, FREE_SHIPPING_THRESHOLD_HUF - subtotal);
+}
 
 // Sentinel `product_variants.size` value used for products that don't need
 // a size choice (e.g. keychains). The DB still requires every purchasable

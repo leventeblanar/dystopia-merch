@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 
 import {
-  SHIPPING_FEE_HUF,
+  getShippingFee,
   SIZELESS_VARIANT_LABEL,
   formatSizeCutLabel,
 } from "../../shared/constants";
@@ -54,7 +54,8 @@ function CheckoutPage() {
     0
   );
 
-  const grandTotal = cartTotal + SHIPPING_FEE_HUF;
+  const shippingFee = getShippingFee(cartTotal);
+  const grandTotal = cartTotal + shippingFee;
 
 
   const handleChange = (field) => (event) => {
@@ -297,7 +298,9 @@ function CheckoutPage() {
             <span>Szállítás</span>
 
             <span>
-              {SHIPPING_FEE_HUF.toLocaleString("hu-HU")} Ft
+              {shippingFee > 0
+                ? `${shippingFee.toLocaleString("hu-HU")} Ft`
+                : "Ingyenes"}
             </span>
           </div>
 

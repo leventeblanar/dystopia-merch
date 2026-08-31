@@ -8,6 +8,8 @@ import {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORY_LABELS,
   formatSizeCutLabel,
+  getShippingFee,
+  getFreeShippingRemaining,
 } from "../../shared/constants";
 
 import dystopiaLogo from "../assets/dystopia-logo.webp";
@@ -269,7 +271,9 @@ function MerchPage() {
       total + Number(item.price) * item.quantity,
     0
   );
-  
+  const shippingFee = getShippingFee(cartTotal);
+  const freeShippingRemaining = getFreeShippingRemaining(cartTotal);
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -450,12 +454,18 @@ function MerchPage() {
               </div>
 
               <div className="mini-cart-total">
-                <span>Összesen</span>
+                <span>Részösszeg</span>
 
                 <strong>
                   {cartTotal.toLocaleString("hu-HU")} Ft
                 </strong>
               </div>
+
+              <p className="mini-cart-shipping-note">
+                {freeShippingRemaining > 0
+                  ? `+ ${shippingFee.toLocaleString("hu-HU")} Ft szállítási költség adódik a végösszeghez. * Már csak ${freeShippingRemaining.toLocaleString("hu-HU")} Ft hiányzik az ingyenes szállításhoz.`
+                  : "A szállítás ingyenes, mivel a kosár értéke eléri a 20 000 Ft-ot."}
+              </p>
 
               <Link
                 className="mini-cart-link"

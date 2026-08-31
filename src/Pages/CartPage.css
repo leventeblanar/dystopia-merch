@@ -872,6 +872,23 @@
 }
 
 
+.cart-summary-free-shipping {
+  margin:
+    -8px
+    0
+    22px;
+
+  color:
+    #a91c32;
+
+  font-size:
+    0.72rem;
+
+  line-height:
+    1.5;
+}
+
+
 /* -------------------- */
 /* CHECKOUT             */
 /* -------------------- */

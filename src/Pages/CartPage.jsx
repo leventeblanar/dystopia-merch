@@ -2,7 +2,13 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext.jsx";
-import { SIZELESS_VARIANT_LABEL, formatSizeCutLabel } from "../../shared/constants";
+import {
+  SIZELESS_VARIANT_LABEL,
+  FREE_SHIPPING_THRESHOLD_HUF,
+  formatSizeCutLabel,
+  getShippingFee,
+  getFreeShippingRemaining,
+} from "../../shared/constants";
 
 import cartHeaderBackground from "../assets/dystopia_background_2.jpg";
 
@@ -39,6 +45,10 @@ function CartPage() {
     },
     0
   );
+
+  const shippingFee = getShippingFee(cartTotal);
+  const freeShippingRemaining = getFreeShippingRemaining(cartTotal);
+  const grandTotal = cartTotal + shippingFee;
 
 
   return (
@@ -229,16 +239,43 @@ function CartPage() {
               </span>
             </div>
 
+            <div className="cart-summary-row">
+              <span>Részösszeg</span>
+
+              <span>
+                {cartTotal.toLocaleString(
+                  "hu-HU"
+                )} Ft
+              </span>
+            </div>
+
+            <div className="cart-summary-row">
+              <span>Szállítás</span>
+
+              <span>
+                {shippingFee > 0
+                  ? `${shippingFee.toLocaleString("hu-HU")} Ft`
+                  : "Ingyenes"}
+              </span>
+            </div>
+
             <div className="cart-summary-total">
               <span>Összesen</span>
 
               <strong>
-                {cartTotal.toLocaleString(
+                {grandTotal.toLocaleString(
                   "hu-HU"
                 )} Ft
               </strong>
             </div>
 
+            {freeShippingRemaining > 0 && (
+              <p className="cart-summary-free-shipping">
+                * Már csak{" "}
+                {freeShippingRemaining.toLocaleString("hu-HU")}{" "}
+                Ft hiányzik az ingyenes szállításhoz.
+              </p>
+            )}
 
             <button
               className="cart-checkout-button"
@@ -253,6 +290,12 @@ function CartPage() {
             <p className="cart-checkout-note">
               A kiszállítási adatokat a következő
               lépésben adhatod meg.
+              <br />
+              {shippingFee > 0
+                ? `A szállítási költség (${shippingFee.toLocaleString("hu-HU")} Ft) a végösszeghez adódik hozzá.`
+                : "A rendelésedhez ingyenes szállítás jár."}{" "}
+              {FREE_SHIPPING_THRESHOLD_HUF.toLocaleString("hu-HU")} Ft
+              feletti rendelés esetén mindig ingyenes a szállítás.
             </p>
           </aside>
 

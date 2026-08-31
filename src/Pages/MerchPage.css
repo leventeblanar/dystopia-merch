@@ -1087,6 +1087,19 @@
 }
 
 
+.mini-cart-shipping-note {
+  margin: 0 0 16px;
+
+  color:
+    rgba(255, 255, 255, 0.42);
+
+  text-align: center;
+
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+
 .mini-cart-link {
   display: flex;
   align-items: center;
