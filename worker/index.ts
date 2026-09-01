@@ -169,19 +169,30 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HUNGARIAN_PHONE_PATTERN = /^(?:(?:\+|00)36|06)(?:1\d{7}|[2-9]\d{8})$/;
+
+function normalizePhoneNumber(value: string): string {
+  return value.replace(/[\s().-]/g, "");
+}
+
 function validateCheckoutBody(body: unknown): body is CheckoutRequestBody {
   if (!body || typeof body !== "object") {
     return false;
   }
 
   const { customer, shipping, items } = body as Record<string, unknown>;
+  const customerData = customer as Record<string, unknown>;
+  const shippingData = shipping as Record<string, unknown>;
 
   if (
     !customer ||
     typeof customer !== "object" ||
-    !isNonEmptyString((customer as Record<string, unknown>).name) ||
-    !isNonEmptyString((customer as Record<string, unknown>).email) ||
-    !isNonEmptyString((customer as Record<string, unknown>).phone)
+    !isNonEmptyString(customerData.name) ||
+    !isNonEmptyString(customerData.email) ||
+    !EMAIL_PATTERN.test(customerData.email.trim()) ||
+    !isNonEmptyString(customerData.phone) ||
+    !HUNGARIAN_PHONE_PATTERN.test(normalizePhoneNumber(customerData.phone))
   ) {
     return false;
   }
@@ -189,9 +200,10 @@ function validateCheckoutBody(body: unknown): body is CheckoutRequestBody {
   if (
     !shipping ||
     typeof shipping !== "object" ||
-    !isNonEmptyString((shipping as Record<string, unknown>).postalCode) ||
-    !isNonEmptyString((shipping as Record<string, unknown>).city) ||
-    !isNonEmptyString((shipping as Record<string, unknown>).streetAddress)
+    !isNonEmptyString(shippingData.postalCode) ||
+    !/^\d{4}$/.test(shippingData.postalCode.trim()) ||
+    !isNonEmptyString(shippingData.city) ||
+    !isNonEmptyString(shippingData.streetAddress)
   ) {
     return false;
   }

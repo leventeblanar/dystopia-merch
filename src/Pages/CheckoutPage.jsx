@@ -10,10 +10,44 @@ import {
 } from "../../shared/constants";
 
 import checkoutHeaderBackground from "../assets/dystopia_background_3.jpg";
+import huPostalCodes from "../data/huPostalCodes.json";
 
 import "./CheckoutPage.css";
 
-import "./CheckoutPage.css";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const HUNGARIAN_PHONE_PATTERN = /^(?:(?:\+|00)36|06)(?:1\d{7}|[2-9]\d{8})$/;
+
+function normalizePhoneNumber(value) {
+  return value.replace(/[\s().-]/g, "");
+}
+
+function getFieldError(field, value, form) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "A mező kitöltése kötelező.";
+
+  if (field === "email" && !EMAIL_PATTERN.test(trimmedValue)) {
+    return "Adj meg egy érvényes email címet.";
+  }
+
+  if (field === "phone" && !HUNGARIAN_PHONE_PATTERN.test(normalizePhoneNumber(trimmedValue))) {
+    return "Adj meg magyar telefonszámot, pl. +36 20 123 4567.";
+  }
+
+  if (field === "postalCode") {
+    if (!/^\d{4}$/.test(trimmedValue)) return "Az irányítószám 4 számjegyből áll.";
+    if (!huPostalCodes[trimmedValue]) return "Ez nem ismert magyar irányítószám.";
+  }
+
+  if (field === "city") {
+    const cities = huPostalCodes[form.postalCode];
+    if (cities && !cities.includes(trimmedValue)) {
+      return "Válassz az irányítószámhoz tartozó települések közül.";
+    }
+  }
+
+  return null;
+}
 
 
 function CheckoutPage() {
@@ -32,6 +66,9 @@ function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const postalCities = huPostalCodes[form.postalCode] ?? [];
 
 
   useEffect(() => {
@@ -59,15 +96,48 @@ function CheckoutPage() {
 
 
   const handleChange = (field) => (event) => {
-    setForm((currentForm) => ({
-      ...currentForm,
-      [field]: event.target.value,
+    const value = field === "postalCode"
+      ? event.target.value.replace(/\D/g, "").slice(0, 4)
+      : event.target.value;
+
+    setForm((currentForm) => {
+      const nextForm = { ...currentForm, [field]: value };
+
+      if (field === "postalCode") {
+        const cities = huPostalCodes[value] ?? [];
+        nextForm.city = cities.length === 1 ? cities[0] : "";
+      }
+
+      return nextForm;
+    });
+
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      [field]: undefined,
+      ...(field === "postalCode" ? { city: undefined } : {}),
+    }));
+  };
+
+  const handleBlur = (field) => (event) => {
+    setFieldErrors((currentErrors) => ({
+      ...currentErrors,
+      [field]: getFieldError(field, event.target.value, form),
     }));
   };
 
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const nextFieldErrors = Object.fromEntries(
+      ["name", "email", "phone", "postalCode", "city", "streetAddress"].map(
+        (field) => [field, getFieldError(field, form[field], form)]
+      )
+    );
+
+    setFieldErrors(nextFieldErrors);
+
+    if (Object.values(nextFieldErrors).some(Boolean)) return;
 
     setSubmitting(true);
     setError(null);
@@ -165,7 +235,10 @@ function CheckoutPage() {
               required
               value={form.name}
               onChange={handleChange("name")}
+              onBlur={handleBlur("name")}
             />
+
+            {fieldErrors.name && <span className="checkout-field-error">{fieldErrors.name}</span>}
           </div>
 
           <div className="checkout-field-row">
@@ -178,7 +251,11 @@ function CheckoutPage() {
                 required
                 value={form.email}
                 onChange={handleChange("email")}
+                onBlur={handleBlur("email")}
+                autoComplete="email"
               />
+
+              {fieldErrors.email && <span className="checkout-field-error">{fieldErrors.email}</span>}
             </div>
 
             <div className="checkout-field">
@@ -190,7 +267,12 @@ function CheckoutPage() {
                 required
                 value={form.phone}
                 onChange={handleChange("phone")}
+                onBlur={handleBlur("phone")}
+                inputMode="tel"
+                autoComplete="tel"
               />
+
+              {fieldErrors.phone && <span className="checkout-field-error">{fieldErrors.phone}</span>}
             </div>
           </div>
 
@@ -209,19 +291,46 @@ function CheckoutPage() {
                 required
                 value={form.postalCode}
                 onChange={handleChange("postalCode")}
+                onBlur={handleBlur("postalCode")}
+                inputMode="numeric"
+                autoComplete="postal-code"
+                maxLength={4}
               />
+
+              {fieldErrors.postalCode && <span className="checkout-field-error">{fieldErrors.postalCode}</span>}
             </div>
 
             <div className="checkout-field">
               <label htmlFor="city">Város</label>
 
-              <input
-                id="city"
-                type="text"
-                required
-                value={form.city}
-                onChange={handleChange("city")}
-              />
+              {postalCities.length > 1 ? (
+                <select
+                  id="city"
+                  required
+                  value={form.city}
+                  onChange={handleChange("city")}
+                  onBlur={handleBlur("city")}
+                  disabled={!form.postalCode}
+                >
+                  <option value="">Válassz települést</option>
+                  {postalCities.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id="city"
+                  type="text"
+                  required
+                  value={form.city}
+                  onChange={handleChange("city")}
+                  onBlur={handleBlur("city")}
+                  readOnly={postalCities.length === 1}
+                  autoComplete="address-level2"
+                />
+              )}
+
+              {fieldErrors.city && <span className="checkout-field-error">{fieldErrors.city}</span>}
             </div>
           </div>
 
@@ -234,7 +343,11 @@ function CheckoutPage() {
               required
               value={form.streetAddress}
               onChange={handleChange("streetAddress")}
+              onBlur={handleBlur("streetAddress")}
+              autoComplete="street-address"
             />
+
+            {fieldErrors.streetAddress && <span className="checkout-field-error">{fieldErrors.streetAddress}</span>}
           </div>
 
           <div className="checkout-field">

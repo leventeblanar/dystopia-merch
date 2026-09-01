@@ -320,7 +320,8 @@
 
 
 .checkout-field input,
-.checkout-field textarea {
+.checkout-field textarea,
+.checkout-field select {
   padding: 12px 14px;
 
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -343,13 +344,32 @@
   resize: vertical;
 }
 
+.checkout-field select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.checkout-field input[readonly] {
+  color: rgba(255, 255, 255, 0.72);
+  cursor: not-allowed;
+}
+
 
 .checkout-field input:focus,
-.checkout-field textarea:focus {
+.checkout-field textarea:focus,
+.checkout-field select:focus {
   outline: none;
 
   border-color: #9f2639;
   background: rgba(255, 255, 255, 0.05);
+}
+
+.checkout-field-error {
+  display: block;
+  margin-top: 8px;
+  color: #f07d7d;
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 

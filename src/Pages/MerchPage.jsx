@@ -264,7 +264,13 @@ function ProductCard({ product }) {
 }
 
 function MerchPage() {
-  const { cartItems, cartCount } = useCart();
+  const {
+    cartItems,
+    cartCount,
+    removeFromCart,
+    increaseCartQuantity,
+    decreaseCartQuantity,
+  } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const cartTotal = cartItems.reduce(
     (total, item) =>
@@ -419,11 +425,16 @@ function MerchPage() {
           ) : (
             <>
               <div className="mini-cart-items">
-                {cartItems.map((item) => (
-                  <div
-                    className="mini-cart-item"
-                    key={item.variantId}
-                  >
+                {cartItems.map((item) => {
+                  const stock = Number(item.stock) || 0;
+                  const canDecrease = item.quantity > 1;
+                  const canIncrease = item.quantity < stock;
+
+                  return (
+                    <div
+                      className="mini-cart-item"
+                      key={item.variantId}
+                    >
                     {item.image && (
                       <img
                         src={item.image}
@@ -436,11 +447,9 @@ function MerchPage() {
                     <div className="mini-cart-item-info">
                       <strong>{item.name}</strong>
 
-                      <span>
-                        {item.size === SIZELESS_VARIANT_LABEL
-                          ? `${item.quantity} db`
-                          : `${formatSizeCutLabel(item.size, item.cut)} · ${item.quantity} db`}
-                      </span>
+                      {item.size !== SIZELESS_VARIANT_LABEL && (
+                        <span>{formatSizeCutLabel(item.size, item.cut)}</span>
+                      )}
 
                       <span>
                         {(
@@ -448,9 +457,48 @@ function MerchPage() {
                           item.quantity
                         ).toLocaleString("hu-HU")} Ft
                       </span>
+
+                      <div className="mini-cart-item-actions">
+                        <div className="mini-cart-item-quantity">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              decreaseCartQuantity(item.variantId);
+                            }}
+                            disabled={!canDecrease}
+                            aria-label="Darabszám csökkentése"
+                          >
+                            −
+                          </button>
+
+                          <span>{item.quantity} db</span>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              increaseCartQuantity(item.variantId);
+                            }}
+                            disabled={!canIncrease}
+                            aria-label="Darabszám növelése"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          className="mini-cart-item-remove"
+                          type="button"
+                          onClick={() => {
+                            removeFromCart(item.variantId);
+                          }}
+                        >
+                          Törlés
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="mini-cart-total">
